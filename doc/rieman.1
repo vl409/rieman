@@ -1,0 +1,369 @@
+.TH rieman 1 "2017-02-14" "GNU/Linux" "User's Manual"
+
+.SH "NAME"
+rieman \- The X11 desktop pager
+
+.SH "SYNOPSIS"
+.B rieman
+[
+.B \-h
+]
+[
+.B \-v[v]
+]
+[
+.B \-c
+config
+]
+[
+.B \-w
+]
+[
+.B \-l logfile
+]
+
+.SH "DESCRIPTION"
+.PP
+.B rieman
+is X11 desktop pager: a program that display each existing virtual
+desktop with its windows and allows to switch between them.
+
+.SS "FEATURES"
+.IP \(bu 4
+NetWM compliant
+.IP \(bu 4
+Large desktop/Viewports support
+.IP \(bu 4
+Ability to set desktops geometry (_NET_DESKTOP_GEOMETRY) to arrange
+desktops in a configurable 2D grid
+.IP \(bu 4
+Displays name of desktops and windows in a configurable info area
+.IP \(bu 4
+Displays desktop number
+.IP \(bu 4
+Window selection/focusing when switching
+.IP \(bu 4
+Configurable look for different window states (active/inactive/requires attention)
+.IP \(bu 4
+Mini per-desktop tray for hidden windows
+.IP \(bu 4
+Supports display of application window icons
+.IP \(bu 4
+Pseudo-transparency support
+.IP \(bu 4
+Theme (aka skin) support. Any element may be customized.
+.IP \(bu 4
+Configuration reload
+
+
+.SH "OPTIONS"
+.TP
+.B \-help
+Displays short message with command-line options synopsis.
+.TP
+.B \-v
+displays version
+
+.TP
+.B \-vv
+displays version and build-time configuration
+
+.TP
+.B \-w
+.B rieman
+starts up in withdrawn mode so it can go into slit (aka dock). Exact
+effect is defined by a running window manager.
+
+.TP
+.B \-c <config>
+use alternate
+.I config
+file. This overrides configuration lookup scheme.
+
+.TP
+.B \-l <logfile>
+use
+.I logfile
+instead of sdout/stderr
+
+.SH "SIGNALS"
+.PP
+
+To reload configuration, send
+.B SIGUSR1
+to the rieman process. It will re-read all configuration files and apply
+changes.
+
+.SH "FILES"
+
+.PP
+The main configuration files is named rieman.xml.
+A skin is a directory containing image files and a
+rieman_skin.xml configuration file. All paths inside
+skin configuration file are relative to its directory.
+
+Files are looked up until found in the following locations:
+
+.TP
+.I ./conf/rieman.xml
+.TP
+.I ./skins/<name>/rieman_skin.xml
+
+current directory configuration (i.e. executing from the build directory)
+
+.TP
+.I
+$XDG_CONFIG_HOME/rieman/rieman.xml
+.TP
+.I $XDG_DATA_HOME/rieman/skins/<name>/rieman_skin.xml
+
+location as defined by freedesktop.org
+
+.TP
+.I ~/.config/rieman.xml
+.TP
+.I ~/.local/share/rieman/skins/<name>/rieman_skin.xml
+
+home directory
+
+.TP
+.I /usr/local/share/rieman/rieman.xml
+.TP
+.I /usr/local/share/rieman/skins/<name>/rieman_skin.xml
+
+system-wide, /usr/local/share/rieman is the default datadir
+
+.SH "CONFIGURATION"
+
+The configuration is stored in XML, inside the root tag, named
+.I rieman-conf
+for the main configuration and
+.I rieman-skin
+for the skin configuration. Both have the
+.I version
+attribute, specifying used version of configuration schema. At the moment of
+writing, only one schema exist, version 1. rieman will check this version
+on start and refuse to load unsupported one.
+
+The version attribute is optional. If not present, rieman will not try
+to validate configuration against known schema and will just try to load
+known keys from document.
+
+Below is the description of available configuration keys. Root tag is omitted
+for brevity, nesting is specified using slash, attributes are specified after
+the key.
+
+.TP
+.I /geometry width=<n> height=<0 | n>
+
+Defines size of a single on-screen desktop cell in pixels. Zero height leads
+to autocalculated setting based on screen aspect ratio.
+
+.TP
+.I /layout wrap=<n> corner=<c> orientation=<horizontal | vertical>
+
+The wrap parameter defines length of a row or column (depending on orientation).
+The corner is one of "topleft", "topright", "bottomleft" or "bottomright" and
+defines how desktops are arranged. See _NET_DESKTOP_LAYOUT for details.
+
+.TP
+.I /appearance/skin name=<name>
+
+Sets the skin name to use.
+
+.TP
+.I /appearance/desktop_text enable=<true | false> content=<name|number>
+
+If set, desktop number or name is displayed in the center of a desktop cell
+
+.TP
+.I /appearance/desktop_pad enable=<true | false> position=<above | below>
+
+If set, little pad is drawn above or below desktop cell, which is used
+to display desktop name (and for other purposes as well, like windows
+names and icons for hidden windows)
+
+.TP
+.I /appearance/window_icon enable=<true | false>
+
+If set, window icon is displayed additionally in a window rectangle
+
+.TP
+.I /appearance/viewports enable=<true | false>
+
+If set, viewports are displayed as a grid inside a desktop cell
+
+.TP
+.I /appearance/minitray enable=<true | false>
+
+If set, icons of a hidden windows are displayed in area, where desktop
+name is shown; click on such an icon restores the window
+
+.TP
+.I /window/withdrawn enable=<true | false>
+    starts the pager in withdrawn state to put into dock/slit
+
+.TP
+.I /window/skip_taskbar enable=<true | false>
+
+    If set, pager window is not shown in the taskbar
+
+.TP
+.I /window/skip_pager enable=<true | false>
+
+    If set, pager window is not shown in pagers
+
+.TP
+.I /window/sticky enable=<true | false>
+
+    If set, pager window appears on all desktops
+
+.TP
+.I /window/position value="topright | topleft | bottomright | bottomleft"
+
+    Defines startup position on the screen. Note that in withdrawn mode
+    window may be reparented and the setting will define position inside
+    dock
+
+.TP
+.I /window/layer value="above | below | normal"
+
+    Defines window layer
+
+.TP
+.I /actions/change_desktop enable=<true | false> mouse_button=<left | right | middle>
+
+    If set, mouse events are processed, allowing to switch desktops and focus
+    windows. The mouse_button arguments selects the desired button.
+
+.SH "SKIN CONFIGURATION"
+
+The skin configuration defines following elements:
+.IP \(bu 4
+/colors - list of named color definitions ('colordef')
+.IP \(bu 4
+/fonts - font specification for pager elements
+.IP \(bu 4
+/backgrounds - textures specifications for pager elements
+.IP \(bu 4
+/borders - borders specification for pager elements
+.IP \(bu 4
+/icons - icons settings
+
+.TP
+.I colordef name=<name> hex=<[#][0x]base16-value>
+
+Defines named color for further use in configuration.
+.TP
+The elements under /fonts have the following attributes:
+.TP
+.I face=<freetype_def> size=<n> color=<colordef>
+
+.I face
+is passed to fontconfig, check corresponding docs. Example "Droid Sans:10:Bold".
+.I size
+is the actual size in pixels that will be used to show it on screen.
+.I color
+is one of previously defined
+.I colordef
+
+Following elements may appear in /fonts: desktop-name, window-name, desktop-number
+.TP
+The elements under /backgrounds have the following attributes:
+.TP
+.I type=<image | color> alpha=<0..1>  src=<path | :root:> | color=<colordef>
+
+For
+.I image,
+src attribute must be specified with a path to PNG image, or a special value
+.I ":root:"
+which will use existing root background. If type is
+.I color
+is specified, previously defined
+.I colordef
+(see below) must be supplied in the
+.I color
+attribute.
+
+The
+.I alpha
+attribute defines transparency of a texture.
+
+Following elements may appear under /backgrounds: pager, desktop, desktop-pad,
+desktop-active, viewport, viewport-active, window, window-active,
+window-attention.
+
+.TP
+The elements under /borders have the following attributes:
+.TP
+.I width=<n> type=<image|color> alpha=<0..1> tiles=<path> | color=<colordef>
+
+Defines border around some element. If
+.I width
+is zero, no border is applied. Border can be either
+.I color
+or
+.I image.
+Image border is a texture with tiles. Texture is 4x4 tiles, each
+.I width
+pixels square.
+The
+.I alpha
+parameter is identical to those of
+.I background
+
+Following elements may appear under /backgrounds: pager,
+desktop-active, viewport, viewport-active, window, window-active,
+window-attention.
+
+.TP
+Stylable pager elemnts:
+
+.TP
+.I pager
+
+Defines the most bottom element for the whole pager. Transparent skins will
+use image and src=":root:" as background.
+
+.TP
+.I desktop, desktop-active
+
+Desktop cell; -active is for currently selected desktop and a desktop under mouse.
+
+.TP
+.I desktop-pad
+
+Area below or above the desktop cell reserverd for name/minitray
+
+.TP
+.I viewport, viewport-active
+
+Viewport area inside desktop cell
+
+.TP
+.I window, window-active, window-attention
+
+Windows in the pager. The 'active' is for focused windows and windows under mouse.
+The 'attention' is for windows that have 'REQUIRE_ATTENTION' state property, for
+example some messaging app with arrived message pending, or newly created
+window.
+
+.TP
+.I /icons/window alpha=<0..1> fallback=<path>
+
+Defines alpha level for window icons and image to use for windows that have
+no icons
+
+.SH "AUTHORS"
+
+The rieman was written by Vladimir Khomutov.
+
+.SH "SEE ALSO"
+.BR xprop (1),
+.BR xwininfo (1),
+.TP
+.BR https://specifications.freedesktop.org/wm-spec/wm-spec-latest.html
+.TP
+.BR https://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
+.TP
+.BR https://www.freedesktop.org/software/fontconfig/fontconfig-user

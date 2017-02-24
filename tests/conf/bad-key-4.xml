@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rieman-conf>
+    <geometry width="50" height="35"/>
+    <layout wrap="2" corner="unknown" orientation="vertical"/>
+    <appearance>
+        <skin name="default"/>
+        <desktop_text enable="true" content="number"/>
+        <desktop_pad enable="true" position="below"/>
+        <window_icon enable="true"/>
+        <viewports enable="true"/>
+        <minitray enable="false"/>
+    </appearance>
+    <window>
+        <withdrawn enable="false"/>
+        <skip_taskbar enable="true"/>
+        <skip_pager enable="true"/>
+        <sticky enable="true"/>
+        <position value="topleft"/>
+        <layer value="normal"/>
+    </window>
+    <actions>
+        <change_desktop enable="true" mouse_button="middle"/>
+    </actions>
+</rieman-conf>

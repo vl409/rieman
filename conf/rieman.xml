@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<rieman-conf version="1.0">
+
+    <!-- size of a single desktop in pixels, zero height == auto -->
+    <geometry width="50" height="0"/>
+
+    <!-- virtual desktops layout -->
+    <layout wrap="2" corner="topleft" orientation="horizontal"/>
+
+    <appearance>
+        <!-- colors, backgrounds, borders... -->
+        <skin name="default"/>
+
+        <!-- displays desktop number in the desktop background -->
+        <desktop_text enable="true" content="number"/>
+
+        <!-- displays name of a desktop below it -->
+        <desktop_pad enable="true" position="above" margin="2"/>
+
+        <!-- displays window icons -->
+        <window_icon enable="true"/>
+
+        <!-- display viewports grid inside desktop -->
+        <viewports enable="true"/>
+
+        <!-- display list of desktop's minimized windows under desktop -->
+        <minitray enable="true"/>
+    </appearance>
+
+    <window>
+        <!-- put into dock/slit -->
+        <withdrawn enable="false"/>
+
+        <!-- do not show pager in taskbar -->
+        <skip_taskbar enable="true"/>
+
+        <!-- do not show in pagers -->
+        <skip_pager enable="true"/>
+
+        <!-- appear on all desktops -->
+        <sticky enable="true"/>
+
+        <!-- startup position on the screen -->
+        <position value="topright"/>
+
+        <!-- window layer - below/above/normal -->
+        <layer value="above"/>
+    </window>
+
+    <actions>
+        <!-- switches the desktop when clicked by it -->
+        <change_desktop enable="true" mouse_button="left"/>
+    </actions>
+
+</rieman-conf>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<rieman-skin name="light" version="1.0">
+
+    <colors>
+        <!-- colors are sorted from light to dark -->
+        <colordef name="c1"  hex="#bee4e3"/>
+        <colordef name="c2"  hex="#a8cecd"/>
+        <colordef name="c3"  hex="#97b9b9"/>
+        <colordef name="c4"  hex="#59cfcc"/>
+        <colordef name="c5"  hex="#3ca7a3"/>
+
+        <colordef name="c6"  hex="#d1efb5"/>
+
+        <colordef name="c7"  hex="#eeeca8"/>
+        <colordef name="c8"  hex="#d8d692"/>
+        <colordef name="c9"  hex="#c2c183"/>
+        <colordef name="c10" hex="#a0a174"/>
+        <colordef name="c11" hex="#7d7d5a"/>
+    </colors>
+
+    <fonts>
+        <desktop-name   size="10" face="Droid Sans:10"           color="c6"/>
+        <window-name    size="10" face="Liberation Sans:10:Bold" color="c6"/>
+        <desktop-number size="20" face="Clockopia"               color="c11"/>
+    </fonts>
+
+    <backgrounds>
+        <pager            type="color" color="c8"/>
+        <desktop          type="color" color="c8"/>
+        <desktop-pad      type="color" color="c9"/>
+        <desktop-active   type="color" color="c7"/>
+        <viewport         type="color" color="c4"/>
+        <viewport-active  type="color" color="c5"/>
+        <window           type="color" color="c10" alpha="0.5"/>
+        <window-active    type="color" color="c3"  alpha="0.5"/>
+        <window-attention type="color" color="c2"/>
+    </backgrounds>
+
+    <borders>
+        <pager            width="1" type="color" color="c11"/>
+        <desktop-active   width="1" type="color" color="c6"/>
+        <viewport         width="1" type="color" color="c9"/>
+        <viewport-active  width="1" type="color" color="c11"/>
+        <window           width="1" type="color" color="c3"/>
+        <window-active    width="1" type="color" color="c11"/>
+        <window-attention width="1" type="color" color="c1"/>
+    </borders>
+
+    <icons>
+        <window alpha="1.0" fallback="missing_icon.png"/>
+    </icons>
+
+</rieman-skin>

@@ -1,0 +1,160 @@
+#!/bin/sh
+
+help()
+{
+cat <<EOF
+...........................................................
+          _|
+_|  _|_|        _|_|    _|_|_|  _|_|      _|_|_|  _|_|_|
+_|_|      _|  _|_|_|_|  _|    _|    _|  _|    _|  _|    _|
+_|        _|  _|        _|    _|    _|  _|    _|  _|    _|
+_|        _|    _|_|_|  _|    _|    _|    _|_|_|  _|    _|
+
+ +-+-+-+-+-+-+-+ +-+-+-+-+-+ +-+-+-+ +-+-+-+
+ |d|e|s|k|t|o|p| |p|a|g|e|r| |f|o|r| |x|1|1|
+ +-+-+-+-+-+-+-+ +-+-+-+-+-+ +-+-+-+ +-+-+-+
+
+Configuration:
+
+    ./auto/configure [options]
+
+Available options:
+
+    --help           - this message
+
+    --prefix=PREFIX  - set installation prefix [/usr/local]
+    --bindir=DIR     - directory for user executables [PREFIX/bin]
+    --mandir=DIR     - directory for man pages [PREFIX/share/man/man1]
+    --docdir=DIR     - directory for documentation [PREFIX/share/doc/rieman]
+    --datadir=DIR    - shared data [PREFIX/share/rieman]
+
+    --with-debug     - disables optimizations and adds extra logging
+    --with-tests     - enable unit tests in separate thread (implies debug)
+    --with-coverage  - instrument for coverage (implies tests)
+
+    --with-cc=       - use specific compiler
+    --with-cc-opt=   - extra compiler options
+    --with-ld-opt=   - extra linker options
+    --enable-asan    - enable address sanitizer
+...........................................................
+EOF
+}
+
+# default configure parameters
+
+RIE_PREFIX=/usr/local
+RIE_DEBUG=no
+RIE_TESTS=no
+RIE_COVERAGE=no
+RIE_ENABLE_ASAN=no
+RIE_CC=cc
+RIE_CC_OPT=
+RIE_LD_OPT=
+
+for option
+do
+    opt="$opt `echo $option | sed -e \"s/\(--[^=]*=\)\(.* .*\)/\1'\2'/\"`"
+
+    case "$option" in
+        -*=*) value=`echo "$option" | sed -e 's/[-_a-zA-Z0-9]*=//'` ;;
+           *) value="" ;;
+    esac
+
+    case "$option" in
+
+        --help|-h)
+            help
+            exit 0
+            ;;
+
+        --prefix=*)
+            RIE_PREFIX="$value"
+            ;;
+
+        --bindir=*)
+            RIE_BINDIR="$value"
+            ;;
+
+        --mandir=*)
+            RIE_MANDIR="$value"
+            ;;
+
+        --docdir=*)
+            RIE_DOCDIR="$value"
+            ;;
+
+        --datadir=*)
+            RIE_DATADIR="$value"
+            ;;
+
+        --with-debug)
+            RIE_DEBUG="yes"
+            ;;
+
+        --with-tests)
+            RIE_TESTS="yes"
+            RIE_DEBUG="yes"
+            ;;
+
+        --with-coverage)
+            RIE_COVERAGE="yes"
+            RIE_DEBUG="yes"
+            RIE_TESTS="yes"
+            ;;
+
+        --with-cc=*)
+            RIE_CC="$value"
+            ;;
+
+        --with-cc-opt=*)
+            RIE_CC_OPT="$value"
+            ;;
+
+        --with-ld-opt=*)
+            RIE_LD_OPT="$value"
+            ;;
+
+        --enable-asan)
+            RIE_ENABLE_ASAN="yes"
+            ;;
+
+        *)
+            echo "Unknown option: '$option'"
+            help
+            exit 1
+            ;;
+    esac
+done
+
+die()
+{
+    echo $@
+    exit 1
+}
+
+[ -d build/ ] && rm -rf build
+
+mkdir -p build || die "failed to create build directory"
+
+cp auto/config.mk build/config.mk  || die "failed to copy config to build"
+
+cat >> build/config.mk <<EOF
+
+PREFIX=$RIE_PREFIX
+BINDIR=${RIE_BINDIR:-$RIE_PREFIX/bin}
+MANDIR=${RIE_MANDIR:-$RIE_PREFIX/share/man/man1}
+DOCDIR=${RIE_DOCDIR:-$RIE_PREFIX/share/doc/rieman/}
+DATADIR=${RID_DATADIR:-$RIE_PREFIX/share/rieman/}
+
+DEBUG=$RIE_DEBUG
+TESTS=$RIE_TESTS
+COVERAGE=$RIE_COVERAGE
+CC=$RIE_CC
+CFLAGS+=$RIE_CC_OPT
+LDFLAGS+=$RIE_LD_OPT
+ENABLE_ASAN=$RIE_ENABLE_ASAN
+EOF
+
+# actual autotests are implemented in make:
+make -f auto/configure.mk -j4 makefile
+

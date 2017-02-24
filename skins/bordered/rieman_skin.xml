@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<rieman-skin name="bordered" version="1.0">
+
+    <colors>
+        <colordef name="white" hex="#ffffff"/>
+        <colordef name="c1"    hex="#52bf90"/>
+        <colordef name="c2"    hex="#49ab81"/>
+        <colordef name="c3"    hex="#419873"/>
+        <colordef name="c4"    hex="#398564"/>
+        <colordef name="c5"    hex="#317256"/>
+        <colordef name="c6"    hex="#224f3c"/>
+        <colordef name="c7"    hex="#74cba6"/>
+        <colordef name="c8"    hex="#1a3d2e"/>
+    </colors>
+
+    <fonts>
+        <desktop-name   size="10" face="Droid Sans:10"           color="white"/>
+        <window-name    size="10" face="Liberation Sans:10:Bold" color="white"/>
+        <desktop-number size="20" face="Clockopia"               color="c5"/>
+    </fonts>
+
+    <backgrounds>
+        <pager            type="color" color="c1"/>
+        <desktop          type="color" color="c1"/>
+        <desktop-pad      type="color" color="c3"/>
+        <desktop-active   type="color" color="c2"/>
+        <viewport         type="color" color="c7"/>
+        <viewport-active  type="color" color="c3"/>
+        <window           type="color" color="c4" alpha="0.5"/>
+        <window-active    type="color" color="c5" alpha="0.5"/>
+        <window-attention type="color" color="c6" alpha="1.0"/>
+    </backgrounds>
+
+    <borders>
+        <pager            width="5" type="image" src="pager-border.png"/>
+        <desktop-active   width="5" type="image" src="desktop-active-border.png"/>
+        <viewport         width="5" type="image" src="viewport-border.png"/>
+        <viewport-active  width="5" type="image" src="viewport-active-border.png"/>
+        <window           width="3" type="image" src="window-border.png"/>
+        <window-active    width="3" type="image" src="window-active-border.png"/>
+        <window-attention width="3" type="image" src="window-attention-border.png"/>
+    </borders>
+
+    <icons>
+        <window alpha="1.0" fallback="missing_icon.png"/>
+    </icons>
+
+</rieman-skin>
