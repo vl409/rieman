@@ -594,7 +594,9 @@ rie_event_number_of_desktops(rie_t *pager, xcb_generic_event_t *ev,
         if (err) {
             return rie_xcb_handle_error0(err, "xcb_ewmh_get_number_of_desktops_reply");
         }
-        return RIE_OK;
+
+        /* property was not found, consider single desktop */
+        ndesktops = 1;
     }
 
     if (oldcount == ndesktops) {
