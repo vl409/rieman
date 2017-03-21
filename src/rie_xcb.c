@@ -571,7 +571,7 @@ rie_xcb_next_event(rie_xcb_t *xcb, int *etype)
 
 /* interruptable event waiter */
 int
-rie_xcb_wait_for_event(rie_xcb_t *xcb)
+rie_xcb_wait_for_event(rie_xcb_t *xcb, sigset_t *sigmask)
 {
     int     fd, rc, err, xerr;
     fd_set  fds;
@@ -583,7 +583,7 @@ rie_xcb_wait_for_event(rie_xcb_t *xcb)
         FD_ZERO(&fds);
         FD_SET(fd, &fds);
 
-        rc = select(fd + 1, &fds, NULL, NULL, NULL);
+        rc = pselect(fd + 1, &fds, NULL, NULL, NULL, sigmask);
 
         err = errno;
 

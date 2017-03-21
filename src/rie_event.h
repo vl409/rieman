@@ -24,8 +24,10 @@
 
 #include "rieman.h"
 
+#include <signal.h>
+
 int rie_event_init(rie_t *pager);
 void rie_event_cleanup(rie_t *pager);
-int rie_event_loop(rie_t *pager);
+int rie_event_loop(rie_t *pager, sigset_t *sigmask);
 
 #endif

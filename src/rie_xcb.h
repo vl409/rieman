@@ -28,6 +28,7 @@
 #include <xcb/xcb.h>
 #include <xcb/xcb_icccm.h>
 #include <xcb/xcb_ewmh.h>
+#include <signal.h>
 
 
 /* order must match atom names enum */
@@ -144,7 +145,7 @@ int rie_xcb_property_notify_atom(rie_xcb_t *xcb,
     xcb_property_notify_event_t *ev);
 
 xcb_generic_event_t *rie_xcb_next_event(rie_xcb_t *xcb, int *etype);
-int rie_xcb_wait_for_event(rie_xcb_t *xcb);
+int rie_xcb_wait_for_event(rie_xcb_t *xcb, sigset_t *sigmask);
 
 int rie_xcb_property_get(rie_xcb_t *xcb, xcb_window_t win,
     unsigned int property, xcb_atom_t type, void *value);

@@ -173,7 +173,7 @@ rie_event_cleanup(rie_t *pager)
 
 
 int
-rie_event_loop(rie_t *pager)
+rie_event_loop(rie_t *pager, sigset_t *sigmask)
 {
     int  i, rc, etype;
 
@@ -190,10 +190,6 @@ rie_event_loop(rie_t *pager)
             /* not each event causes redraw/resize */
             ctx.render = 0;
             ctx.resize = 0;
-
-            if (rie_quit) {
-                goto terminate;
-            }
 
             /* lookup known events */
             for (i = 0; i < nevents; i++) {
@@ -234,36 +230,27 @@ rie_event_loop(rie_t *pager)
             }
         }
 
-        /* handle signals received during normal work */
-        if (rie_quit) {
-            goto terminate;
-        }
-
-        if (rie_reload) {
-            rie_reload = 0;
-            rie_event_reload(&pager);
-        }
-
-        if (rie_xcb_wait_for_event(pager->xcb) != RIE_OK) {
+        if (rie_xcb_wait_for_event(pager->xcb, sigmask) != RIE_OK) {
             goto done;
         }
 
-        /* handle signals received during wait loop */
+        /* handle received signals */
 
         if (rie_quit) {
-            /* handle signal*/
-            goto terminate;
+            rie_quit = 0;
+
+            rie_log(" *** terminate signal received ***");
+            break;
         }
 
         if (rie_reload) {
             rie_reload = 0;
+
+            rie_log(" *** reload signal received ***");
             rie_event_reload(&pager);
         }
 
     } while (1);
-
-terminate:
-    rie_log(" *** terminate signal received ***");
 
 done:
 
@@ -280,8 +267,6 @@ static void
 rie_event_reload(rie_t **ppager)
 {
     rie_t  *newpager, *oldpager;
-
-    rie_log(" *** reload signal received ***");
 
     oldpager = *ppager;
 

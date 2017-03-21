@@ -312,11 +312,10 @@ rie_signal_handler(int sig_num)
 
 
 static int
-rie_init_signals()
+rie_init_signals(sigset_t *ss)
 {
     int  rc;
 
-    sigset_t          ss, old_ss;
     struct sigaction  sa;
 
     sa.sa_flags = 0;
@@ -340,34 +339,36 @@ rie_init_signals()
         return RIE_ERROR;
     }
 
-    /* Ignore all signals except those we use */
-    rc = sigfillset(&ss);
+    /* block all signals */
+    rc = sigfillset(ss);
     if (-1 == rc) {
         rie_log_error0(errno, "sigfillset()");
         return RIE_ERROR;
     }
 
-    rc = sigdelset(&ss, SIGTERM);
-    if (-1 == rc) {
-        rie_log_error0(errno, "sigdelset()");
-        return RIE_ERROR;
-    }
-
-    rc = sigdelset(&ss, SIGINT);
-    if (-1 == rc) {
-        rie_log_error0(errno, "sigdelset()");
-        return RIE_ERROR;
-    }
-
-    rc = sigdelset(&ss, SIGUSR1);
-    if (-1 == rc) {
-        rie_log_error0(errno, "sigdelset()");
-        return RIE_ERROR;
-    }
-
-    rc = sigprocmask(SIG_SETMASK, &ss, &old_ss);
+    rc = sigprocmask(SIG_BLOCK, ss, NULL);
     if (-1 == rc) {
         rie_log_error0(errno, "sigprocmask()");
+        return RIE_ERROR;
+    }
+
+    /* prepare signal mask for pselect() */
+
+    rc = sigdelset(ss, SIGTERM);
+    if (-1 == rc) {
+        rie_log_error0(errno, "sigdelset()");
+        return RIE_ERROR;
+    }
+
+    rc = sigdelset(ss, SIGINT);
+    if (-1 == rc) {
+        rie_log_error0(errno, "sigdelset()");
+        return RIE_ERROR;
+    }
+
+    rc = sigdelset(ss, SIGUSR1);
+    if (-1 == rc) {
+        rie_log_error0(errno, "sigdelset()");
         return RIE_ERROR;
     }
 
@@ -423,11 +424,12 @@ rie_pager_new(char *cfile, rie_log_t *log)
 int
 main(int argc, char *argv[])
 {
-    int      i;
-    char    *cfile, *logfile;
-    rie_t    *pager;
+    int         i;
+    char       *cfile, *logfile;
+    rie_t      *pager;
+    sigset_t    sigmask;
+    rie_log_t  *log;
 
-    rie_log_t *log;
     char conf_file[FILENAME_MAX];
 
     cfile = NULL;
@@ -512,7 +514,7 @@ main(int argc, char *argv[])
         pager->cfg->withdrawn = 1;
     }
 
-    if (rie_init_signals() != RIE_OK) {
+    if (rie_init_signals(&sigmask) != RIE_OK) {
         goto failed;
     }
 
@@ -525,7 +527,7 @@ main(int argc, char *argv[])
 
     rie_log(" *** starting event loop ***");
 
-    return rie_event_loop(pager);
+    return rie_event_loop(pager, &sigmask);
 
 failed:
 
