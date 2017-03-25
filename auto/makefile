@@ -88,23 +88,23 @@ clean:
 	@echo "--- cleanup done ---"
 
 install: build/rieman
-	mkdir -p $(BINDIR)
-	mkdir -p $(DATADIR)
-	mkdir -p $(MANDIR)
-	mkdir -p $(DOCDIR)
-	install ./build/rieman $(BINDIR)
-	install ./conf/rieman.xml $(DATADIR)/rieman.xml
-	install ./conf/rieman-1.0.xsd $(DATADIR)/rieman-1.0.xsd
-	tar cf - ./skins | (cd $(DATADIR); tar xf -)
-	install ./doc/rieman.1 $(MANDIR)
-	install ./README.md $(DOCDIR)
-	install ./COPYING $(DOCDIR)
+	mkdir -p $(DESTDIR)$(BINDIR)
+	mkdir -p $(DESTDIR)$(DATADIR)
+	mkdir -p $(DESTDIR)$(MANDIR)
+	mkdir -p $(DESTDIR)$(DOCDIR)
+	install -m 755 ./build/rieman $(DESTDIR)$(BINDIR)
+	install -m 644 ./conf/rieman.xml $(DESTDIR)$(DATADIR)/rieman.xml
+	install -m 644 ./conf/rieman-1.0.xsd $(DESTDIR)$(DATADIR)/rieman-1.0.xsd
+	tar cf - ./skins | (cd $(DESTDIR)$(DATADIR); tar xf -)
+	install -m 644 ./doc/rieman.1 $(DESTDIR)$(MANDIR)
+	install -m 644 ./README.md $(DESTDIR)$(DOCDIR)
+	install -m 644 ./COPYING $(DESTDIR)$(DOCDIR)
 
 uninstall:
-	rm -i $(BINDIR)/rieman
-	rm -i $(MANDIR)/rieman.1
-	rm -ir $(DATADIR)
-	rm -ir $(DOCDIR)
+	rm -i $(DESTDIR)$(BINDIR)/rieman
+	rm -i $(DESTDIR)$(MANDIR)/rieman.1
+	rm -ir $(DESTDIR)$(DATADIR)
+	rm -ir $(DESTDIR)$(DOCDIR)
 
 test: build/rieman
 	@echo "--- running external tests ---"

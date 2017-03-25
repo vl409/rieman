@@ -27,6 +27,7 @@ Available options:
     --mandir=DIR     - directory for man pages [PREFIX/share/man/man1]
     --docdir=DIR     - directory for documentation [PREFIX/share/doc/rieman]
     --datadir=DIR    - shared data [PREFIX/share/rieman]
+    --destdir=DIR    - directory to prepend for each installed file
 
     --with-debug     - disables optimizations and adds extra logging
     --with-tests     - enable unit tests in separate thread (implies debug)
@@ -87,6 +88,10 @@ do
             RIE_DATADIR="$value"
             ;;
 
+        --destdir=*)
+            RIE_DESTDIR="$value"
+            ;;
+
         --with-debug)
             RIE_DEBUG="yes"
             ;;
@@ -145,6 +150,7 @@ BINDIR=${RIE_BINDIR:-$RIE_PREFIX/bin}
 MANDIR=${RIE_MANDIR:-$RIE_PREFIX/share/man/man1}
 DOCDIR=${RIE_DOCDIR:-$RIE_PREFIX/share/doc/rieman/}
 DATADIR=${RIE_DATADIR:-$RIE_PREFIX/share/rieman/}
+DESTDIR=${RIE_DESTDIR:-}
 
 DEBUG=$RIE_DEBUG
 TESTS=$RIE_TESTS
