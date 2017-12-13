@@ -130,7 +130,12 @@ rie_gfx_render_patch(rie_gfx_t *gc, rie_texture_t *tspec, rie_rect_t *dst,
         return RIE_OK;
     }
 
-    // root background
+    if (dst->w == 0 || dst->h == 0) {
+        /* do not try to render invisible items */
+        return RIE_OK;
+    }
+
+    /* root background */
     rie_rect_t  dest = *dst;
 
     if (src) {
@@ -167,6 +172,11 @@ rie_gfx_render_texture(rie_gfx_t *gc, rie_texture_t *tspec, rie_rect_t *dst,
     double  dx, dy;
 
     if (tspec->type == RIE_TX_TYPE_NONE) {
+        return RIE_OK;
+    }
+
+    if (dst->w == 0 || dst->h == 0) {
+        /* do not try to render invisible items */
         return RIE_OK;
     }
 
