@@ -215,6 +215,14 @@ rie_gfx_render_texture(rie_gfx_t *gc, rie_texture_t *tspec, rie_rect_t *dst,
         dx = ((double)dst->w)/dx;
         dy = ((double)dst->h)/dy;
 
+        if (dx == 0 || dy == 0) {
+            /* cairo_scale() will reject such values and put context
+             * into an error state, preventing further drawing
+             */
+            cairo_restore(gc->cr);
+            return RIE_OK;
+        }
+
         cairo_push_group(gc->cr);
 
         cairo_translate(gc->cr, dst->x, dst->y);
