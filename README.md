@@ -7,6 +7,8 @@ The desktop pager is a progam that:
  * displays virtual desktops and windows on it
  * switches between desktops/windows per user requests
 
+ ![Default theme](docs/s1.png?raw=true "Default theme") | ![Transparent theme](docs/s2.png?raw=true "Transparent theme")
+
 INSTALLATION
 ------------
 
