@@ -434,16 +434,15 @@ rie_event_xcb_button_release(rie_t *pager, xcb_generic_event_t *ev,
 
     new_x = new_y = 0;
 
-    if (!(button->state & pager->cfg->change_desktop_button)) {
+    if (!(button->state & pager->cfg->tile_button
+          || button->state & pager->cfg->change_desktop_button))
+    {
         return RIE_OK;
     }
 
-    wid = rie_hidden_window_by_coords(pager, button->event_x, button->event_y);
-    if (wid) {
-        return rie_xcb_restore_hidden(pager->xcb, wid);
-    }
-
-    if (pager->cfg->show_viewports && (pager->vp_rows > 1 || pager->vp_cols > 1)) {
+    if (pager->cfg->show_viewports
+        && (pager->vp_rows > 1 || pager->vp_cols > 1))
+    {
         new_desk = rie_viewport_by_coords(pager, button->event_x,
                                           button->event_y, &new_x, &new_y);
 
@@ -455,6 +454,20 @@ rie_event_xcb_button_release(rie_t *pager, xcb_generic_event_t *ev,
     if (new_desk == -1) {
         /* ignore event, not a desktop hit: border/labels... */
         return RIE_OK;
+    }
+
+    if (button->state & pager->cfg->tile_button) {
+
+        ctx->render = 1;
+
+        return rie_windows_tile(pager, new_desk);
+    }
+
+    /* button->state & pager->cfg->change_desktop_button */
+
+    wid = rie_hidden_window_by_coords(pager, button->event_x, button->event_y);
+    if (wid) {
+        return rie_xcb_restore_hidden(pager->xcb, wid);
     }
 
     if (new_desk != pager->current_desktop) {

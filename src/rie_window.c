@@ -22,12 +22,16 @@
 #include "rieman.h"
 #include "rie_xcb.h"
 
+#include <math.h>
 
 static void rie_window_cleanup_winlist(void *windows, size_t nitems);
 static int rie_window_get_icon(rie_xcb_t *xcb, rie_gfx_t *gc,
     rie_window_t *window);
 static void rie_window_free_icons(void *data, size_t nitems);
-
+static int rie_window_center_resize(rie_t *pager, rie_window_t *win,
+    rie_rect_t bb);
+static int rie_windows_tile_awesome_fair(rie_t *pager, int desk,
+    rie_tile_fair_orientation_e orientation);
 
 static char *rie_window_missing_name = "-";
 
@@ -90,8 +94,8 @@ int
 rie_window_update_geometry(rie_t *pager)
 {
     int            i, rc;
-    rie_window_t  *win;
     rie_rect_t    *vp;
+    rie_window_t  *win;
     xcb_window_t  *root;
 
     win = pager->windows.data;
@@ -120,7 +124,7 @@ rie_window_query(rie_t *pager, rie_window_t *window, uint32_t winid)
     char  *textres;
 
     rie_xcb_t     *xcb;
-    rie_rect_t    *vp;
+    rie_rect_t    *vp, box, bb, frame;
     xcb_window_t  *root;
 
     xcb = pager->xcb;
@@ -135,6 +139,11 @@ rie_window_query(rie_t *pager, rie_window_t *window, uint32_t winid)
     root = rie_array_get(&pager->virtual_roots, window->desktop, xcb_window_t);
 
     rc = rie_xcb_get_window_geometry(xcb, &winid, root, &window->box, vp);
+    if (rc != RIE_OK) {
+        return rc;
+    }
+
+    rc = rie_xcb_get_window_frame(pager->xcb, winid, &window->frame);
     if (rc != RIE_OK) {
         return rc;
     }
@@ -188,6 +197,22 @@ rie_window_query(rie_t *pager, rie_window_t *window, uint32_t winid)
                                                  | PropertyChangeMask);
 
     /* result is ignored, as window may not exist */
+
+    if (window->tile_adjust) {
+
+        window->tile_adjust = 0;
+
+        box = window->box;
+        bb = window->tile_box;
+        frame = window->frame;
+
+        box.x = (abs(bb.w - (box.w + frame.x + frame.w)) / 2) + bb.x;
+        box.y = (abs(bb.h - (box.h + frame.y + frame.h)) / 2) + bb.y;
+
+
+        return rie_xcb_moveresize_window(pager->xcb, winid,
+                                         box.x, box.y, box.w, box.h);
+    }
 
     return RIE_OK;
 }
@@ -323,4 +348,166 @@ rie_window_free_icons(void *data, size_t nitems)
             img[i].tx = NULL;
         }
     }
+}
+
+
+static int
+rie_window_center_resize(rie_t *pager, rie_window_t *win, rie_rect_t bb)
+{
+    int         rc;
+    rie_rect_t  frame;
+
+    frame = win->frame;
+
+    bb.x += frame.x;
+    bb.y += frame.y;
+    bb.w -= (frame.x + frame.w);
+    bb.h -= (frame.y + frame.h);
+
+    rc = rie_xcb_moveresize_window(pager->xcb, win->winid,
+                                   bb.x, bb.y, bb.w, bb.h);
+    if (rc != RIE_OK) {
+        return rc;
+    }
+
+    /*
+     * request for window resize is sent...
+     * ConfigureNotify event comes...
+     * rie_window_query() is invoked...
+     * and uses new coordinates to center self...
+     */
+
+    win->tile_adjust = 1;
+    win->tile_box = bb;
+
+    return RIE_OK;
+}
+
+#include <unistd.h>
+int
+rie_windows_tile(rie_t *pager, int desk)
+{
+    int  rc;
+
+    switch (pager->current_tile_mode) {
+    case RIE_TILE_MODE_FAIR_EAST:
+        rc = rie_windows_tile_awesome_fair(pager, desk, RIE_TILE_FAIR_EAST);
+        break;
+
+    case RIE_TILE_MODE_FAIR_WEST:
+        rc = rie_windows_tile_awesome_fair(pager, desk, RIE_TILE_FAIR_WEST);
+        break;
+
+    default:
+        pager->current_tile_mode = 0;
+        return rie_windows_tile(pager, desk);
+    }
+
+    pager->current_tile_mode++;
+
+    return rc;
+}
+
+
+static int
+rie_windows_tile_awesome_fair(rie_t *pager, int desk,
+    rie_tile_fair_orientation_e orientation)
+{
+    int  i, k, n, nclients;
+
+    uint32_t        row, rows, lrows, col, cols, lcols;
+    rie_rect_t     *workarea, wa, g;
+    rie_window_t   *win, *c;
+    rie_desktop_t  *deskp;
+
+    workarea = rie_array_get(&pager->workareas, desk, rie_rect_t);
+    deskp = rie_array_get(&pager->desktops, desk, rie_desktop_t);
+
+    nclients = deskp->nnormal;
+
+    wa = *workarea;
+
+    if (orientation == RIE_TILE_FAIR_EAST) {
+        rie_swap(wa.w, wa.h, uint32_t);
+        rie_swap(wa.x, wa.y, int);
+    }
+
+    rows = cols = 0;
+
+    if (nclients  == 2) {
+        rows = 1;
+        cols = 2;
+
+    } else {
+        rows = ceil(sqrt(nclients));
+        cols = ceil((double)nclients / rows);
+    }
+
+    win = pager->windows.data;
+    for (i = 0, n = 0; i < pager->windows.nitems; i++) {
+        if (win[i].dead
+            || win[i].state & RIE_WIN_STATE_SKIP_PAGER
+            || win[i].types & RIE_WINDOW_TYPE_DESKTOP
+            || win[i].types & RIE_WINDOW_TYPE_DOCK
+            || win[i].desktop != desk
+            || win[i].state & RIE_WIN_STATE_HIDDEN)
+        {
+            continue;
+        }
+
+        c = &win[i];
+
+        n++;
+        k = n - 1;
+
+        row = col = 0;
+        g.x = g.y = g.w = g.h = 0;
+
+        row = k % rows;
+        col = floor((double) k / rows);
+
+        lrows = lcols = 0;
+
+        if (k >= rows * cols - rows) {
+            lrows = nclients - (rows * cols - rows);
+            lcols = cols;
+
+        } else {
+            lrows = rows;
+            lcols = cols;
+        }
+
+        if (row == lrows - 1) {
+            g.h = wa.h - ceil((double) wa.h / lrows) * row;
+            g.y = wa.h - g.h;
+
+        } else {
+            g.h = ceil((double) wa.h / lrows);
+            g.y = g.h * row;
+        }
+
+        if (col == lcols - 1) {
+            g.w = wa.w - ceil((double) wa.w / lcols) * col;
+            g.x = wa.w - g.w;
+
+        } else {
+            g.w = ceil((double) wa.w / lcols);
+            g.x = g.w * col;
+        }
+
+        g.h -= c->frame.w * 2;
+        g.w -= c->frame.h * 2;
+
+        g.y += wa.y;
+        g.x += wa.x;
+
+        if (orientation == RIE_TILE_FAIR_EAST) {
+            rie_swap(g.w, g.h, uint32_t);
+            rie_swap(g.x, g.y, int);
+        }
+
+        rie_window_center_resize(pager, &win[i], g);
+    }
+
+    return RIE_OK;
 }

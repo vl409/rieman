@@ -175,6 +175,15 @@ int rie_xcb_update_event_mask(rie_xcb_t *xcb, xcb_window_t win,
 
 int rie_xcb_configure_window(rie_xcb_t *xcb, int x, int y, int w, int h);
 
+int rie_xcb_configure_window_ext(rie_xcb_t *xcb, xcb_window_t target,
+    int x, int y, int w, int h);
+
+int rie_xcb_moveresize_window(rie_xcb_t *xcb, xcb_window_t target,
+    int x, int y, int w, int h);
+
+int rie_xcb_get_window_frame(rie_xcb_t *xcb, xcb_window_t win,
+    rie_rect_t *frame);
+
 void rie_xcb_flush(rie_xcb_t *xcb);
 
 int rie_xcb_get_root_pixmap(rie_xcb_t *xcb, rie_gfx_t *gc, rie_image_t *img);

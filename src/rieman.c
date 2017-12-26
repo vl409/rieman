@@ -161,6 +161,12 @@ static rie_conf_item_t rie_conf[] = {
       offsetof(rie_settings_t, change_desktop_button),
       rie_conf_set_variants, { &rie_conf_buttons } },
 
+    /* configuration schema 1.1 */
+
+    { "/rieman-conf/actions/tile_windows/@mouse_button", RIE_CTYPE_STR, "right",
+      offsetof(rie_settings_t, tile_button),
+      rie_conf_set_variants, { &rie_conf_buttons } },
+
     { NULL, 0, NULL, 0, NULL, { NULL } }
 };
 
@@ -397,7 +403,7 @@ rie_pager_new(char *cfile, rie_log_t *log)
     memset(pager, 0, sizeof(rie_t));
 
     cfg->meta.version_min = 10;
-    cfg->meta.version_max = 10;
+    cfg->meta.version_max = 11;
 
     rie_log("using configuration file '%s'", cfile);
 

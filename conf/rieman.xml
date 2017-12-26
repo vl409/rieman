@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<rieman-conf version="1.0">
+<rieman-conf version="1.1">
 
     <!-- size of a single desktop in pixels, zero height == auto -->
     <geometry width="50" height="0"/>
@@ -51,6 +51,7 @@
     <actions>
         <!-- switches the desktop when clicked by it -->
         <change_desktop enable="true" mouse_button="left"/>
+        <tile_windows enable="true" mouse_button="right"/>
     </actions>
 
 </rieman-conf>

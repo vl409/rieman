@@ -71,6 +71,12 @@ enum rie_desktop_labels_e {
     RIE_DESKTOP_NAME
 };
 
+typedef enum {
+    RIE_TILE_MODE_FAIR_EAST,
+    RIE_TILE_MODE_FAIR_WEST,
+    RIE_TILE_MODE_LAST
+} rie_tile_e;
+
 typedef struct {
     uint32_t  version_min;      /* minimum supported version */
     uint32_t  version_max;      /* maximum supported version */
@@ -104,6 +110,7 @@ struct rie_settings_s {
     } desktop;
 
     uint32_t         change_desktop_button;
+    uint32_t         tile_button;
     uint32_t         wmhints;               /* initial window state flags */
 };
 
@@ -112,6 +119,7 @@ typedef struct {
     rie_rect_t       dbox;                  /* desktop representation */
     rie_rect_t       pad;                   /* pad for desktop name/icons */
     uint32_t         nhidden;               /* number of hidden windows */
+    uint32_t         nnormal;               /* number of normal windows */
     uint32_t         lrow;
     uint32_t         lcol;
 } rie_desktop_t;
@@ -152,6 +160,8 @@ struct rie_s {
     int32_t          m_x;                   /* current mouse position/state */
     int32_t          m_y;
     uint8_t          m_in;
+
+    rie_tile_e       current_tile_mode;
 };
 
 rie_t *rie_pager_new(char *cfile, rie_log_t *log);

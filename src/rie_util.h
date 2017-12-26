@@ -23,6 +23,10 @@
 #define __RIE_UTIL_H__
 
 
+#define rie_swap(x, y, typ) \
+  do { typ tmp = x; x = y; y = tmp; } while (0)
+
+
 /* get pointer to i-th element of array if present, or to first */
 #define rie_array_get(arr, i, type)                     \
     (i) < (arr)->nitems ? &(((type *)(arr)->data)[i])   \

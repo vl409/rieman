@@ -24,10 +24,19 @@
 
 #include "rieman.h"
 
+typedef enum {
+    RIE_TILE_FAIR_EAST,
+    RIE_TILE_FAIR_WEST,
+} rie_tile_fair_orientation_e;
+
+
 struct  rie_window_s {
     rie_rect_t       box;        /* real window corrdinates/size  */
     rie_rect_t       sbox;       /* scaled window inside pager    */
     rie_rect_t       hbox;       /* box of a hidden window on pad */
+    rie_rect_t       frame;      /* window manager decorations (real) */
+    rie_rect_t       tile_box;   /* tiling bounding box */
+
     char            *name;
     char            *title;
     uint32_t         state;
@@ -38,6 +47,7 @@ struct  rie_window_s {
     uint8_t          focused;
     uint8_t          m_in;       /* mouse is over window *in pager* */
     uint8_t          dead;
+    uint8_t          tile_adjust;
     rie_array_t     *icons;
 };
 
@@ -49,6 +59,6 @@ int rie_window_update_geometry(rie_t *pager);
 int rie_window_query(rie_t *pager, rie_window_t *window, uint32_t winid);
 
 void rie_window_update_pager_focus(rie_t *pager);
-
+int rie_windows_tile(rie_t *pager, int desk);
 
 #endif

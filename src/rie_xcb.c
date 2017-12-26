@@ -138,6 +138,13 @@ rie_xcb_new(rie_settings_t *cfg)
 
     xcb->root = xcb->xs->root;
 
+    cookie = xcb_ewmh_init_atoms(xcb->xc, &xcb->ewmh);
+
+    if (xcb_ewmh_init_atoms_replies(&xcb->ewmh, cookie, &err) == 0) {
+        (void) rie_xcb_handle_error0(err, "xcb_ewmh_init_atoms_replies");
+        return NULL;
+    }
+
     if (rie_xcb_create_window(xcb) != RIE_OK) {
         return NULL;
     }
@@ -170,12 +177,6 @@ rie_xcb_new(rie_settings_t *cfg)
         return NULL;
     }
 
-    cookie = xcb_ewmh_init_atoms(xcb->xc, &xcb->ewmh);
-
-    if (xcb_ewmh_init_atoms_replies(&xcb->ewmh, cookie, &err) == 0) {
-        (void) rie_xcb_handle_error0(err, "xcb_ewmh_init_atoms_replies");
-        return NULL;
-    }
 
     if (rie_xcb_set_window_borderless(xcb) != RIE_OK) {
         return NULL;
@@ -408,6 +409,14 @@ rie_xcb_create_window(rie_xcb_t *xcb)
 int
 rie_xcb_configure_window(rie_xcb_t *xcb, int x, int y, int w, int h)
 {
+    return rie_xcb_configure_window_ext(xcb, xcb->window, x, y, w, h);
+}
+
+
+int
+rie_xcb_configure_window_ext(rie_xcb_t *xcb, xcb_window_t target, int x, int y,
+    int w, int h)
+{
     uint16_t  mask;
     uint32_t  values[4];
 
@@ -422,11 +431,40 @@ rie_xcb_configure_window(rie_xcb_t *xcb, int x, int y, int w, int h)
     values[2] = w;
     values[3] = h;
 
-    cookie = xcb_configure_window(xcb->xc, xcb->window, mask, values);
+    cookie = xcb_configure_window(xcb->xc, target, mask, values);
 
     error = xcb_request_check(xcb->xc, cookie);
     if (error != NULL) {
         return rie_xcb_handle_error0(error, "xcb_configure_window");
+    }
+
+    return RIE_OK;
+}
+
+
+int
+rie_xcb_moveresize_window(rie_xcb_t *xcb, xcb_window_t target, int x, int y,
+    int w, int h)
+{
+    xcb_void_cookie_t       cookie;
+    xcb_generic_error_t    *error;
+    xcb_ewmh_connection_t  *ec;
+
+    ec = rie_xcb_ewmh(xcb);
+
+    cookie = xcb_ewmh_request_moveresize_window(
+        ec, xcb->screen, target, XCB_GRAVITY_STATIC,
+        XCB_EWMH_CLIENT_SOURCE_TYPE_OTHER,
+        XCB_EWMH_MOVERESIZE_WINDOW_X
+        | XCB_EWMH_MOVERESIZE_WINDOW_Y
+        | XCB_EWMH_MOVERESIZE_WINDOW_WIDTH
+        | XCB_EWMH_MOVERESIZE_WINDOW_HEIGHT,
+        x, y, w, h);
+
+    error = xcb_request_check(xcb->xc, cookie);
+    if (error != NULL) {
+        return rie_xcb_handle_error0(error,
+                                     "xcb_ewmh_request_moveresize_window");
     }
 
     return RIE_OK;
@@ -480,13 +518,54 @@ rie_xcb_get_window_geometry(rie_xcb_t *xcb, xcb_window_t *winp,
      * returned coordinates are absolute to desktop;
      *
      * box->x and y are non-zero in case of our window is reparented
-     * (i.e. inside some dock window and not in a fist position)
+     * (i.e. inside some dock window and not in a first position)
      *
      */
     box->x = trans->dst_x + x - box->x;
     box->y = trans->dst_y + y - box->y;
 
     free (trans);
+
+    /*
+     * TODO: window borders visually are a part of window and thus should be
+     *       treated by pager as window area;
+     */
+
+    return RIE_OK;
+}
+
+
+int
+rie_xcb_get_window_frame(rie_xcb_t *xcb, xcb_window_t win, rie_rect_t *frame)
+{
+    int  rc;
+
+    xcb_generic_error_t           *error;
+    xcb_ewmh_connection_t         *ec;
+    xcb_get_property_cookie_t      cookie;
+    xcb_ewmh_get_extents_reply_t   reply;
+
+    ec = rie_xcb_ewmh(xcb);
+
+    cookie = xcb_ewmh_get_frame_extents(ec, win);
+
+    rc = xcb_ewmh_get_frame_extents_reply(ec, cookie, &reply, &error);
+
+    if (rc == 0) {
+
+        if (error) {
+            return rie_xcb_handle_error0(error, "xcb_ewmh_get_frame_extents");
+        }
+
+        frame->x = frame->y = frame->w = frame->h = 0;
+
+        return RIE_OK;
+    }
+
+    frame->x = reply.left;
+    frame->y = reply.top;
+    frame->w = reply.right;
+    frame->h = reply.bottom;
 
     return RIE_OK;
 }

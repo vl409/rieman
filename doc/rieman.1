@@ -1,4 +1,4 @@
-.TH rieman 1 "2017-02-14" "GNU/Linux" "User's Manual"
+.TH rieman 1 "2017-12-26" "GNU/Linux" "User's Manual"
 
 .SH "NAME"
 rieman \- The X11 desktop pager
@@ -235,6 +235,14 @@ name is shown; click on such an icon restores the window
 
     If set, mouse events are processed, allowing to switch desktops and focus
     windows. The mouse_button arguments selects the desired button.
+
+.TP
+.I /actions/tile_windows enable=<true | false> mouse_button=<left | right | middle>
+
+    If set, mouse events are processed, allowing to tile windows on clicked
+    desktop, using different tiling methods in a loop. Currently supported
+    method is "fair" ported from the awesome WM, in horizontal and vertical modes.
+    The mouse_button arguments selects the desired button.
 
 .SH "SKIN CONFIGURATION"
 

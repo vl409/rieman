@@ -265,6 +265,7 @@ rie_count_hidden_windows(rie_t *pager, int i)
     desk = pager->desktops.data;
 
     desk[i].nhidden = 0;
+    desk[i].nnormal = 0;
 
     for (j = 0; j < pager->windows.nitems; j++) {
 
@@ -273,6 +274,7 @@ rie_count_hidden_windows(rie_t *pager, int i)
         }
 
         if (!(win[j].state & RIE_WIN_STATE_HIDDEN)) {
+            desk[i].nnormal++;
             continue;
         }
 
