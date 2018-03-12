@@ -451,6 +451,11 @@ rie_event_xcb_button_release(rie_t *pager, xcb_generic_event_t *ev,
                                          button->event_y);
     }
 
+    wid = rie_hidden_window_by_coords(pager, button->event_x, button->event_y);
+    if (wid) {
+        return rie_xcb_restore_hidden(pager->xcb, wid);
+    }
+
     if (new_desk == -1) {
         /* ignore event, not a desktop hit: border/labels... */
         return RIE_OK;
@@ -464,11 +469,6 @@ rie_event_xcb_button_release(rie_t *pager, xcb_generic_event_t *ev,
     }
 
     /* button->state & pager->cfg->change_desktop_button */
-
-    wid = rie_hidden_window_by_coords(pager, button->event_x, button->event_y);
-    if (wid) {
-        return rie_xcb_restore_hidden(pager->xcb, wid);
-    }
 
     if (new_desk != pager->current_desktop) {
         if (rie_xcb_set_desktop(pager->xcb, new_desk) != RIE_OK) {
