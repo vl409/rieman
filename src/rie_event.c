@@ -813,6 +813,7 @@ rie_event_desktop_geometry(rie_t *pager, xcb_generic_event_t *ev,
     rie_log("desktop geometry is %ld x %ld", w, h);
 
     ctx->render = 1;
+    ctx->resize = 1;
 
     return RIE_OK;
 }
