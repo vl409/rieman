@@ -383,7 +383,7 @@ rie_window_center_resize(rie_t *pager, rie_window_t *win, rie_rect_t bb)
     return RIE_OK;
 }
 
-#include <unistd.h>
+
 int
 rie_windows_tile(rie_t *pager, int desk)
 {
