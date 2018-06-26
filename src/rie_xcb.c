@@ -504,7 +504,7 @@ rie_xcb_get_window_geometry(rie_xcb_t *xcb, xcb_window_t *winp,
     box->w = geom->width;
     box->h = geom->height;
 
-    free (geom);
+    free(geom);
 
     /* we need coordinates in the root window coordinate system */
     trans = xcb_translate_coordinates_reply(xcb->xc,
@@ -524,7 +524,7 @@ rie_xcb_get_window_geometry(rie_xcb_t *xcb, xcb_window_t *winp,
     box->x = trans->dst_x + x - box->x;
     box->y = trans->dst_y + y - box->y;
 
-    free (trans);
+    free(trans);
 
     /*
      * TODO: window borders visually are a part of window and thus should be
