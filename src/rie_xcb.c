@@ -1073,8 +1073,11 @@ rie_xcb_update_event_mask(rie_xcb_t *xcb, xcb_window_t win,
 int
 rie_xcb_get_root_pixmap(rie_xcb_t *xcb, rie_gfx_t *gc, rie_image_t *img)
 {
-    int             rc;
-    xcb_drawable_t  pixmap;
+    int                        rc;
+    rie_rect_t                 box;
+    xcb_drawable_t             pixmap;
+    xcb_generic_error_t       *error;
+    xcb_get_geometry_reply_t  *geom;
 
     /* locate ID of root window pixmap */
     rc = rie_xcb_property_get(xcb, xcb->root, RIE_XROOTPMAP_ID,
@@ -1083,7 +1086,23 @@ rie_xcb_get_root_pixmap(rie_xcb_t *xcb, rie_gfx_t *gc, rie_image_t *img)
         return RIE_ERROR;
     }
 
-    return rie_xcb_get_screen_pixmap(xcb, gc, pixmap, &xcb->resolution, img);
+    /* TODO: also try accessing XA_ESETROOT_PMAP_ID */
+
+    /* root pixmap size does not always match root window size */
+    geom = xcb_get_geometry_reply(xcb->xc, xcb_get_geometry(xcb->xc, pixmap),
+                                                            &error);
+    if (geom == NULL) {
+        return rie_xcb_handle_error0(error, "xcb_get_geometry");
+    }
+
+    box.x = geom->x;
+    box.y = geom->y;
+    box.w = geom->width;
+    box.h = geom->height;
+
+    free(geom);
+
+    return rie_xcb_get_screen_pixmap(xcb, gc, pixmap, &box, img);
 }
 
 

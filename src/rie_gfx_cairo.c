@@ -126,6 +126,8 @@ int
 rie_gfx_render_patch(rie_gfx_t *gc, rie_texture_t *tspec, rie_rect_t *dst,
     rie_rect_t *src, rie_clip_t *clip)
 {
+    rie_pattern_t  *pat;
+
     if (tspec->type == RIE_TX_TYPE_NONE) {
         return RIE_OK;
     }
@@ -133,14 +135,6 @@ rie_gfx_render_patch(rie_gfx_t *gc, rie_texture_t *tspec, rie_rect_t *dst,
     if (dst->w == 0 || dst->h == 0) {
         /* do not try to render invisible items */
         return RIE_OK;
-    }
-
-    /* root background */
-    rie_rect_t  dest = *dst;
-
-    if (src) {
-        dest.x -= src->x;
-        dest.y -= src->y;
     }
 
     cairo_save(gc->cr);
@@ -152,9 +146,23 @@ rie_gfx_render_patch(rie_gfx_t *gc, rie_texture_t *tspec, rie_rect_t *dst,
         clip = clip->parent;
     }
 
-    cairo_set_source_surface(gc->cr, CS(tspec->tx), dest.x, dest.y);
+    if (src) {
+        /* root background, must be tiled and shifted */
 
-    cairo_rectangle(gc->cr, dst->x, dst->y, dest.w, dest.h);
+        pat = rie_gfx_pattern_from_surface(tspec->tx);
+
+        cairo_rectangle(gc->cr, dst->x, dst->y, dst->w, dst->h);
+        cairo_translate(gc->cr, -src->x, -src->y);
+
+        cairo_set_source(gc->cr, (cairo_pattern_t *) pat);
+
+    } else {
+
+        cairo_set_source_surface(gc->cr, CS(tspec->tx), dst->x, dst->y);
+
+        cairo_rectangle(gc->cr, 0, 0, dst->w, dst->h);
+    }
+
     cairo_clip(gc->cr);
 
     cairo_paint_with_alpha(gc->cr, tspec->alpha);
