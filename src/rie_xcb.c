@@ -38,7 +38,7 @@ struct rie_xcb_s {
     xcb_connection_t       *xc;
     xcb_screen_t           *xs;
     xcb_ewmh_connection_t   ewmh;
-    rie_rect_t              resolution;
+    rie_rect_t              root_geom;
     xcb_atom_t              atoms[RIE_ATOM_LAST];
 };
 
@@ -153,8 +153,15 @@ rie_xcb_new(rie_settings_t *cfg)
         return NULL;
     }
 
-    /* expected to be set by WM, but this is not always true */
-    rc = rie_xcb_update_event_mask(xcb, xcb->root, PropertyChangeMask);
+    /*
+     * PropertyChangeMask is expected to be set by WM,
+     * but this is not always true;
+     *
+     * StructureNotifyMask is needed to get Configure events to track
+     * root window resizes
+     */
+    rc = rie_xcb_update_event_mask(xcb, xcb->root, PropertyChangeMask
+                                                   | StructureNotifyMask);
     if (rc != RIE_OK) {
         return NULL;
     }
@@ -170,13 +177,9 @@ rie_xcb_new(rie_settings_t *cfg)
         }
     }
 
-    /* consider root window size identical to screen resolution */
-    rc = rie_xcb_get_window_geometry(xcb, &xcb->root, NULL, &xcb->resolution,
-                                     NULL);
-    if (rc != RIE_OK) {
+    if (rie_xcb_update_root_geom(xcb) != RIE_OK) {
         return NULL;
     }
-
 
     if (rie_xcb_set_window_borderless(xcb) != RIE_OK) {
         return NULL;
@@ -227,10 +230,29 @@ rie_xcb_screen(rie_xcb_t *xcb)
 }
 
 rie_rect_t
-rie_xcb_resolution(rie_xcb_t *xcb)
+rie_xcb_root_geom(rie_xcb_t *xcb)
 {
-    return xcb->resolution;
+    return xcb->root_geom;
 }
+
+
+int
+rie_xcb_update_root_geom(rie_xcb_t *xcb)
+{
+    int         rc;
+    rie_rect_t  box;
+
+    rc = rie_xcb_get_window_geometry(xcb, &xcb->root, NULL, &box, NULL);
+
+    if (rc != RIE_OK) {
+        return RIE_ERROR;
+    }
+
+    xcb->root_geom = box;
+
+    return RIE_OK;
+}
+
 
 xcb_window_t
 rie_xcb_get_root(rie_xcb_t *xcb)

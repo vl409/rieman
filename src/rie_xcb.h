@@ -125,7 +125,8 @@ xcb_window_t rie_xcb_get_window(rie_xcb_t *xcb);
 xcb_visualtype_t *rie_xcb_root_visual(rie_xcb_t *xcb);
 xcb_ewmh_connection_t *rie_xcb_ewmh(rie_xcb_t *xcb);
 int rie_xcb_screen(rie_xcb_t *xcb);
-rie_rect_t rie_xcb_resolution(rie_xcb_t *xcb);
+rie_rect_t rie_xcb_root_geom(rie_xcb_t *xcb);
+int rie_xcb_update_root_geom(rie_xcb_t *xcb);
 
 xcb_screen_t *rie_xcb_get_screen(xcb_connection_t *c, int screen);
 xcb_visualtype_t *rie_xcb_find_visual(xcb_connection_t *c,

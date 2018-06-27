@@ -385,7 +385,7 @@ rie_set_pager_geometry(rie_t *pager, int resize_win, rie_rect_t *win)
     int32_t   x, y;
     uint32_t  cols, rows;
 
-    rie_rect_t     *dbox, *pad, res, *workarea, *cell;
+    rie_rect_t     *dbox, *pad, root_geom, *workarea, *cell;
     rie_border_t   *border, *vpborder;
 
     /* shortcuts */
@@ -408,10 +408,10 @@ rie_set_pager_geometry(rie_t *pager, int resize_win, rie_rect_t *win)
                   * pager->cfg->desktop.w;
     }
 
-    res = rie_xcb_resolution(pager->xcb);
+    root_geom = rie_xcb_root_geom(pager->xcb);
 
-    pager->vp_rows = pager->desktop_geom.h / res.h;
-    pager->vp_cols = pager->desktop_geom.w / res.w;
+    pager->vp_rows = rie_max(1, pager->desktop_geom.h / root_geom.h);
+    pager->vp_cols = rie_max(1, pager->desktop_geom.w / root_geom.w);
 
     if (pager->vp_rows > 1 || pager->vp_cols > 1) {
         pager->vp.h = dbox->h / pager->vp_rows;

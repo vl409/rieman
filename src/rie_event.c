@@ -511,6 +511,14 @@ rie_event_xcb_configure_notify(rie_t *pager, xcb_generic_event_t *ev,
 
     int            rc;
     rie_window_t  *win;
+    xcb_window_t   root;
+
+    root = rie_xcb_get_root(pager->xcb);
+
+    if (xce->window == root) {
+        ctx->render = 1;
+        return rie_xcb_update_root_geom(pager->xcb);
+    }
 
     win = rie_window_lookup(pager, xce->window);
     if (win == NULL) {
@@ -1045,7 +1053,7 @@ rie_event_desktop_viewport(rie_t *pager, xcb_generic_event_t *ev,
     rie_event_state_t *ctx)
 {
     int           rc, i, screen;
-    rie_rect_t   *viewport, res;
+    rie_rect_t   *viewport, root_geom;
     rie_array_t   viewports;
 
     xcb_generic_error_t        *err;
@@ -1056,7 +1064,7 @@ rie_event_desktop_viewport(rie_t *pager, xcb_generic_event_t *ev,
 
     ec = rie_xcb_ewmh(pager->xcb);
     screen = rie_xcb_screen(pager->xcb);
-    res = rie_xcb_resolution(pager->xcb);
+    root_geom = rie_xcb_root_geom(pager->xcb);
 
     cookie = xcb_ewmh_get_desktop_viewport(ec, screen);
 
@@ -1084,8 +1092,8 @@ rie_event_desktop_viewport(rie_t *pager, xcb_generic_event_t *ev,
         viewport[i].y = reply.desktop_viewport[i].y;
 
         /* .w is column, .h is row of a desktop's viewport */
-        viewport[i].w = viewport[i].x / res.w;
-        viewport[i].h = viewport[i].y / res.h;
+        viewport[i].w = viewport[i].x / root_geom.w;
+        viewport[i].h = viewport[i].y / root_geom.h;
     }
 
     xcb_ewmh_get_desktop_viewport_reply_wipe(&reply);
@@ -1121,8 +1129,8 @@ fallback:
 
     viewport[0].x = 0;
     viewport[0].y = 0;
-    viewport[0].w = res.w;
-    viewport[0].h = res.h;
+    viewport[0].w = root_geom.w;
+    viewport[0].h = root_geom.h;
 
     if (pager->viewports.data) {
         rie_array_wipe(&pager->viewports);
