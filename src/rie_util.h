@@ -55,4 +55,24 @@ char *rie_mkpath(char *p1,...);
 int rie_backtrace_save(rie_array_t *bt);
 #endif
 
+static inline int
+rie_min(int a, int b)
+{
+    if (a > b) {
+        return b;
+    }
+
+    return a;
+}
+
+static inline int
+rie_max(int a, int b)
+{
+    if (a < b) {
+        return b;
+    }
+
+    return a;
+}
+
 #endif
