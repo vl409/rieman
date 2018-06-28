@@ -851,6 +851,7 @@ rie_testcase_window_change_desktop(rie_t *pager, rie_testcase_t *tc)
             if (win[i].desktop != pager->current_desktop) {
                 rie_log_error0(errno, "executed "TEST_APP" window is "
                                "not on current desktop");
+                rc = RIE_ERROR;
                 goto restore;
 
             } else {
@@ -867,10 +868,9 @@ found:
     newd = pager->current_desktop + 1;
 
     /* minimize */
-    if (rie_test_exec("xdotool search --onlyvisible --classname "
-                      TEST_APP_CLASS" set_desktop_for_window %d", newd)
-        != RIE_OK)
-    {
+    rc = rie_test_exec("xdotool search --onlyvisible --classname "
+                      TEST_APP_CLASS" set_desktop_for_window %d", newd);
+    if (rc != RIE_OK) {
         goto restore;
     }
 
