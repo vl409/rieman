@@ -108,6 +108,12 @@ uninstall:
 	rm -ir $(DESTDIR)$(DOCDIR)
 
 test: build/rieman
+	@echo "--- check if binary has tests enabled ---"
+	@if ! ./build/rieman -vv | grep "tests:   yes" > /dev/null ; then     \
+	    printf "%s\n" " - Builtin tests are not enabled:";                \
+	    printf "%s\n" " please add '--with-tests' option to configure";   \
+	    exit 1;                                                           \
+	fi
 	@echo "--- running external tests ---"
 	@python ./tests/rieman_tests.py
 	@echo "--- running internal tests ---"
