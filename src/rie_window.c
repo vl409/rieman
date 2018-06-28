@@ -206,8 +206,8 @@ rie_window_query(rie_t *pager, rie_window_t *window, uint32_t winid)
         bb = window->tile_box;
         frame = window->frame;
 
-        box.x = (abs(bb.w - (box.w + frame.x + frame.w)) / 2) + bb.x;
-        box.y = (abs(bb.h - (box.h + frame.y + frame.h)) / 2) + bb.y;
+        box.x = (abs((int32_t)(bb.w - (box.w + frame.x + frame.w))) / 2) + bb.x;
+        box.y = (abs((int32_t)(bb.h - (box.h + frame.y + frame.h))) / 2) + bb.y;
 
 
         return rie_xcb_moveresize_window(pager->xcb, winid,
