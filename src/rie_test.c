@@ -33,6 +33,15 @@
 #include <signal.h>
 #include <sys/types.h>
 
+
+/*
+ * X application to execute for testing windows operations
+ * killall is used during test cleanup, so don't use something important
+ */
+#define TEST_APP "xterm"
+#define TEST_APP_CLASS "XTerm"
+
+
 #define rie_test_poll_cond(tc, cond, ms)       \
     do {                                       \
         uint32_t  cnt = 0;                     \
@@ -255,6 +264,7 @@ rie_test_exec(char *fmt, ...)
     free(p);
     return RIE_OK;
 }
+
 
 /* verify that changed number of desktops is noted */
 static int
@@ -544,6 +554,7 @@ restore:
     return rc;
 }
 
+
 int
 rie_test_get_desktop_names(rie_xcb_t *xcb, rie_array_t *names)
 {
@@ -578,6 +589,7 @@ rie_test_get_desktop_names(rie_xcb_t *xcb, rie_array_t *names)
 
     return rc;
 }
+
 
 static int
 rie_testcase_desktop_name_change(rie_t *pager, rie_testcase_t *tc)
@@ -667,6 +679,7 @@ restore:
     return rc;
 }
 
+
 static int
 rie_testcase_window_states(rie_t *pager, rie_testcase_t *tc)
 {
@@ -679,7 +692,7 @@ rie_testcase_window_states(rie_t *pager, rie_testcase_t *tc)
     desk = rie_array_get(&pager->desktops, pager->current_desktop, rie_desktop_t);
 
     /* window to manipulate */
-    if (rie_test_exec("xcalc &") != RIE_OK) {
+    if (rie_test_exec(TEST_APP" &") != RIE_OK) {
         return RIE_ERROR;
     }
 
@@ -689,7 +702,8 @@ rie_testcase_window_states(rie_t *pager, rie_testcase_t *tc)
     n = desk->nhidden;
 
     /* minimize */
-    if (rie_test_exec("xdotool search --onlyvisible --classname xcalc windowminimize")
+    if (rie_test_exec("xdotool search --onlyvisible --classname "
+                      TEST_APP_CLASS" windowminimize")
         != RIE_OK)
     {
         return RIE_ERROR;
@@ -757,7 +771,7 @@ rie_testcase_window_states(rie_t *pager, rie_testcase_t *tc)
 
 restore:
 
-    (void) rie_test_exec("killall xcalc");
+    (void) rie_test_exec("killall "TEST_APP);
 
     return rc;
 }
@@ -823,7 +837,7 @@ rie_testcase_window_change_desktop(rie_t *pager, rie_testcase_t *tc)
     rie_window_t   *win;
 
     /* window to manipulate */
-    if (rie_test_exec("xcalc &") != RIE_OK) {
+    if (rie_test_exec(TEST_APP" &") != RIE_OK) {
         return RIE_ERROR;
     }
 
@@ -832,10 +846,10 @@ rie_testcase_window_change_desktop(rie_t *pager, rie_testcase_t *tc)
 
     win = pager->windows.data;
     for (i = 0; i < pager->windows.nitems; i++) {
-        if (strcmp(win[i].name, "xcalc") == 0) {
+        if (strcmp(win[i].name, TEST_APP) == 0) {
 
             if (win[i].desktop != pager->current_desktop) {
-                rie_log_error0(errno, "executed xcalc window is "
+                rie_log_error0(errno, "executed "TEST_APP" window is "
                                "not on current desktop");
                 goto restore;
 
@@ -845,7 +859,7 @@ rie_testcase_window_change_desktop(rie_t *pager, rie_testcase_t *tc)
         }
     }
 
-    rie_log_error0(errno, "executed xcalc window not found");
+    rie_log_error0(errno, "executed "TEST_APP" window not found");
     return RIE_ERROR;
 
 found:
@@ -853,8 +867,8 @@ found:
     newd = pager->current_desktop + 1;
 
     /* minimize */
-    if (rie_test_exec("xdotool search --onlyvisible --classname xcalc "
-                      "set_desktop_for_window %d", newd)
+    if (rie_test_exec("xdotool search --onlyvisible --classname "
+                      TEST_APP_CLASS" set_desktop_for_window %d", newd)
         != RIE_OK)
     {
         goto restore;
@@ -866,7 +880,7 @@ found:
     /* need to find window again, because it could be re-allocated */
     win = pager->windows.data;
     for (i = 0; i < pager->windows.nitems; i++) {
-        if (strcmp(win[i].name, "xcalc") == 0) {
+        if (strcmp(win[i].name, TEST_APP) == 0) {
             if (win[i].desktop != newd) {
                 rie_tc_failed(tc);
                 rc = RIE_OK;
@@ -880,7 +894,7 @@ found:
 
 restore:
 
-    (void) rie_test_exec("killall xcalc");
+    (void) rie_test_exec("killall "TEST_APP);
 
     return rc;
 }
