@@ -39,7 +39,7 @@ rie_tests = [
 
         'show-verbose-version': {
             'cmd': 'build/rieman -vv',
-            'stdout': 'Rieman \d\.\d Copyright \(c\) \d\d\d\d .*prefix:.*debug:.*',
+            'stdout': 'Rieman \d\.\d\.\d Copyright \(c\) \d\d\d\d .*prefix:.*debug:.*',
             'stderr': '^$',
             'rc': 0,
             'timeout': 1 },
@@ -193,7 +193,7 @@ rie_tests = [
 
         'default-exec': {
             'cmd': 'build/rieman',
-            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'./conf/rieman.xml\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
+            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'./conf/rieman.xml\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
             'stderr': '.*',
             'rc': 0,
             'timeout': 1 },
@@ -201,28 +201,28 @@ rie_tests = [
         'xdg': {
             'cmd': 'build/rieman',
             'env': { 'XDG_CONFIG_HOME': 'foo', 'XDG_DATA_HOME': 'foo' },
-            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'./conf/rieman.xml\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
+            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'./conf/rieman.xml\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
             'stderr': '.*',
             'rc': 0,
             'timeout': 1 },
 
         'c1': {
             'cmd': 'build/rieman -c tests/conf/c1.xml',
-            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'tests/conf/c1.xml\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
+            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'tests/conf/c1.xml\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
             'stderr': '.*',
             'rc': 0,
             'timeout': 1 },
 
         'c2': {
             'cmd': 'build/rieman -c tests/conf/c2.xml',
-            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'tests/conf/c2.xml\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
+            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'tests/conf/c2.xml\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
             'stderr': '.*',
             'rc': 0,
             'timeout': 1 },
 
         'c3': {
             'cmd': 'build/rieman -c tests/conf/c3.xml',
-            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'tests/conf/c3.xml\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
+            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'tests/conf/c3.xml\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
             'stderr': '.*',
             'rc': 0,
             'timeout': 1 },
@@ -235,14 +235,14 @@ rie_tests = [
 
         'skin-1': {
             'cmd': 'build/rieman -c tests/conf/skin-1.xml',
-            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'tests/conf/skin-1.xml\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
+            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'tests/conf/skin-1.xml\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
             'stderr': '.*',
             'rc': 0,
             'timeout': 1 },
 
         'skin-3': {
             'cmd': 'build/rieman -c tests/conf/skin-3.xml',
-            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'tests/conf/skin-3.xml\'.*\[.*\] -err- cairo_image_surface_create_from_png\(\'.*missing.png\'\).*',
+            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'tests/conf/skin-3.xml\'.*\[.*\] -err- cairo_image_surface_create_from_png\(\'.*missing.png\'\).*',
             'stderr': 'rieman failed to start',
             'rc': 0,
             'timeout': 1 },
