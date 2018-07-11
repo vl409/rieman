@@ -140,8 +140,6 @@ int rie_xcb_get_window_geometry(rie_xcb_t *xcb, xcb_window_t *win,
 rie_xcb_t *rie_xcb_new(rie_settings_t *cfg);
 void rie_xcb_delete(rie_xcb_t *xcb);
 
-int rie_xcb_init_atoms(rie_xcb_t *xcb);
-
 int rie_xcb_property_notify_atom(rie_xcb_t *xcb,
     xcb_property_notify_event_t *ev);
 

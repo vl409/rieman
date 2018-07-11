@@ -42,6 +42,7 @@ struct rie_xcb_s {
     xcb_atom_t              atoms[RIE_ATOM_LAST];
 };
 
+static int rie_xcb_init_atoms(rie_xcb_t *xcb);
 static int rie_xcb_set_window_borderless(rie_xcb_t *xcb);
 static int rie_xcb_set_window_title(rie_xcb_t *xcb);
 static int rie_xcb_set_initial_state(rie_xcb_t *xcb, rie_settings_t *cfg);
@@ -593,7 +594,7 @@ rie_xcb_get_window_frame(rie_xcb_t *xcb, xcb_window_t win, rie_rect_t *frame)
 }
 
 
-int
+static int
 rie_xcb_init_atoms(rie_xcb_t *xcb)
 {
     int                        i, rc;
