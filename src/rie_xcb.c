@@ -876,7 +876,7 @@ rie_xcb_property_get_array(rie_xcb_t *xcb, xcb_window_t win,
 
 int
 rie_xcb_property_set_array(rie_xcb_t *xcb, xcb_window_t win,
-    unsigned int property, xcb_atom_t xtype, rie_array_t *array)
+    xcb_atom_t property, xcb_atom_t xtype, rie_array_t *array)
 {
     xcb_void_cookie_t     cookie;
     xcb_generic_error_t  *error;
@@ -887,8 +887,8 @@ rie_xcb_property_set_array(rie_xcb_t *xcb, xcb_window_t win,
         uint32_t *data;
 
         data = array->data;
-        rie_debug("xcb_change_property %s[%ld]:",
-                  rie_atom_names[property], array->nitems);
+        rie_debug("xcb_change_property %d[%ld items]:",
+                  property, array->nitems);
         for (i = 0; i < array->nitems; i++) {
             rie_debug("\telement #%d = %d", i + 1, data[i]);
         }
@@ -896,7 +896,7 @@ rie_xcb_property_set_array(rie_xcb_t *xcb, xcb_window_t win,
 #endif
 
     cookie = xcb_change_property_checked(xcb->xc, XCB_PROP_MODE_REPLACE, win,
-                                         xcb->atoms[property], xtype, 32,
+                                         property, xtype, 32,
                                          array->nitems, array->data);
 
     error = xcb_request_check(xcb->xc, cookie);

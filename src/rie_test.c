@@ -821,7 +821,8 @@ rie_testcase_geometry_fallback(rie_t *pager, rie_testcase_t *tc)
 restore:
 
     (void) rie_xcb_property_set_array(pager->xcb, rie_xcb_get_root(pager->xcb),
-                                      RIE_NET_DESKTOP_GEOMETRY,
+                                      rie_xcb_atom(pager->xcb,
+                                                   RIE_NET_DESKTOP_GEOMETRY),
                                       XCB_ATOM_CARDINAL, &res);
     rie_array_wipe(&res);
 

@@ -162,7 +162,7 @@ int rie_xcb_property_get_array_utftext(rie_xcb_t *xcb, xcb_window_t win,
     unsigned int property, rie_array_t *array);
 
 int rie_xcb_property_set_array(rie_xcb_t *xcb, xcb_window_t win,
-    unsigned int property, xcb_atom_t xtype, rie_array_t *array);
+    xcb_atom_t property, xcb_atom_t xtype, rie_array_t *array);
 
 #if defined(RIE_TESTS)
 int rie_xcb_property_delete(rie_xcb_t *xcb, xcb_window_t win,
