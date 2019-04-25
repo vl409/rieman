@@ -31,7 +31,6 @@
 
 
 struct rie_xcb_s {
-    Display                *display;
     int                     screen;
     xcb_window_t            root;
     xcb_window_t            window;
