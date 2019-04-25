@@ -18,6 +18,7 @@ You will need build tools:
 
  * c99 compiler (gcc and clang tested)
  * gnu make
+ * pkg-config to detect libraries
 
  and some libraries:
 

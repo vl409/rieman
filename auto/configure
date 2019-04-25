@@ -161,6 +161,13 @@ LDFLAGS+=$RIE_LD_OPT
 ENABLE_ASAN=$RIE_ENABLE_ASAN
 EOF
 
+pkg-config >/dev/null 2>&1
+if [ $? -eq 127 ]; then
+    echo "pkg-config binary is not found in PATH"
+    echo "pkg-config is required to detect libraries, please install"
+    exit 1
+fi
+
 # actual autotests are implemented in make:
 make -f auto/configure.mk -j4 makefile
 
