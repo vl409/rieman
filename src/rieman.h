@@ -160,6 +160,8 @@ struct rie_s {
     int32_t          m_x;                   /* current mouse position/state */
     int32_t          m_y;
     uint8_t          m_in;
+    uint8_t          resize;                /* 1 if event assumes resizing */
+    uint8_t          render;                /* 1 if event assumes rendering */
 
     rie_tile_e       current_tile_mode;
 };

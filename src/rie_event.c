@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017 Vladimir Homutov
+ * Copyright (C) 2017-2019 Vladimir Homutov
  */
 
 /*
@@ -27,14 +27,7 @@
 #include "rie_external.h"
 
 
-typedef struct {
-    int                   render;
-    int                   resize;
-    char                 *evname;
-} rie_event_state_t;
-
-typedef int (*rie_event_handler_pt)(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx);
+typedef int (*rie_event_handler_pt)(rie_t *pager, xcb_generic_event_t *ev);
 
 typedef struct {
     int                    id;
@@ -44,46 +37,26 @@ typedef struct {
 } rie_event_t;
 
 static void rie_event_reload(rie_t **ppager);
-static int rie_event_xcb_expose(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx);
-static int rie_event_xcb_enter_notify(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx);
-static int rie_event_xcb_leave_notify(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx);
-static int rie_event_xcb_motion_notify(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx);
-static int rie_event_xcb_button_release(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx);
-static int rie_event_xcb_configure_notify(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx);
-static int rie_event_xcb_property_notify(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx);
-static int rie_event_number_of_desktops(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx);
-static int rie_event_desktop_names(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx);
-static int rie_event_current_desktop(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx);
-static int rie_event_client_list(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx);
-static int rie_event_desktop_geometry(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx);
-static int rie_event_wm_state(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx);
-static int rie_event_wm_window_type(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx);
-static int rie_event_wm_desktop(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx);
-static int rie_event_xrootpmap_id(rie_t *pager,  xcb_generic_event_t *ev,
-    rie_event_state_t *ctx);
-static int rie_event_active_window(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx);
-static int rie_event_workarea(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx);
-static int rie_event_desktop_viewport(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx);
-static int rie_event_virtual_roots(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx);
+static int rie_event_xcb_expose(rie_t *pager, xcb_generic_event_t *ev);
+static int rie_event_xcb_enter_notify(rie_t *pager, xcb_generic_event_t *ev);
+static int rie_event_xcb_leave_notify(rie_t *pager, xcb_generic_event_t *ev);
+static int rie_event_xcb_motion_notify(rie_t *pager, xcb_generic_event_t *ev);
+static int rie_event_xcb_button_release(rie_t *pager, xcb_generic_event_t *ev);
+static int rie_event_xcb_configure_notify(rie_t *pager, xcb_generic_event_t *ev);
+static int rie_event_xcb_property_notify(rie_t *pager, xcb_generic_event_t *ev);
+static int rie_event_number_of_desktops(rie_t *pager, xcb_generic_event_t *ev);
+static int rie_event_desktop_names(rie_t *pager, xcb_generic_event_t *ev);
+static int rie_event_current_desktop(rie_t *pager, xcb_generic_event_t *ev);
+static int rie_event_client_list(rie_t *pager, xcb_generic_event_t *ev);
+static int rie_event_desktop_geometry(rie_t *pager, xcb_generic_event_t *ev);
+static int rie_event_wm_state(rie_t *pager, xcb_generic_event_t *ev);
+static int rie_event_wm_window_type(rie_t *pager, xcb_generic_event_t *ev);
+static int rie_event_wm_desktop(rie_t *pager, xcb_generic_event_t *ev);
+static int rie_event_xrootpmap_id(rie_t *pager,  xcb_generic_event_t *ev);
+static int rie_event_active_window(rie_t *pager, xcb_generic_event_t *ev);
+static int rie_event_workarea(rie_t *pager, xcb_generic_event_t *ev);
+static int rie_event_desktop_viewport(rie_t *pager, xcb_generic_event_t *ev);
+static int rie_event_virtual_roots(rie_t *pager, xcb_generic_event_t *ev);
 
 #define named(val)  val, #val
 
@@ -123,8 +96,6 @@ rie_event_init(rie_t *pager)
 {
     int  i;
 
-    rie_event_state_t  ctx;
-
     static rie_event_handler_pt  init_handlers[] = {
         rie_event_desktop_geometry,
         rie_event_workarea,
@@ -140,13 +111,13 @@ rie_event_init(rie_t *pager)
 
     /* trigger fake events to populate initial settings */
     for (i = 0; init_handlers[i]; i++) {
-        if (init_handlers[i](pager, NULL, &ctx) != RIE_OK) {
+        if (init_handlers[i](pager, NULL) != RIE_OK) {
             return RIE_ERROR;
         }
     }
 
     /* initial render with window positioning and resize */
-    return rie_render(pager, 1);
+    return rie_render(pager);
 }
 
 
@@ -175,9 +146,8 @@ rie_event_cleanup(rie_t *pager)
 int
 rie_event_loop(rie_t *pager, sigset_t *sigmask)
 {
-    int  i, rc, etype;
+    int  i, rc;
 
-    rie_event_state_t     ctx;
     xcb_generic_event_t  *ev;
 
     static size_t nevents =
@@ -185,18 +155,13 @@ rie_event_loop(rie_t *pager, sigset_t *sigmask)
 
     do {
 
-        while ((ev = rie_xcb_next_event(pager->xcb, &etype))) {
-
-            /* not each event causes redraw/resize */
-            ctx.render = 0;
-            ctx.resize = 0;
+        while ((ev = rie_xcb_next_event(pager->xcb))) {
 
             /* lookup known events */
             for (i = 0; i < nevents; i++) {
-                if (etype == rie_event_handlers[i].id) {
-                    ctx.evname = rie_event_handlers[i].evname;
+                if (rie_xcb_event_type(ev) == rie_event_handlers[i].id) {
                     if (rie_event_handlers[i].loggable) {
-                        rie_debug("event %s", ctx.evname);
+                        rie_debug("event %s", rie_event_handlers[i].evname);
                     }
                     break;
                 }
@@ -204,29 +169,31 @@ rie_event_loop(rie_t *pager, sigset_t *sigmask)
 
             if (i == nevents) {
                 /* unknown event */
-                ctx.evname = "unknown event";
+                rie_debug("unknown event #%d", rie_xcb_event_type(ev));
                 free(ev);
                 continue;
             }
 
-            rc = rie_event_handlers[i].handler(pager, ev, &ctx);
-
-            free(ev);
+            rc = rie_event_handlers[i].handler(pager, ev);
 
             if (rc != RIE_OK) {
 
 #if defined (RIE_DEBUG)
-                rie_debug("leaving event loop during processing event %s "
+                rie_debug("leaving event loop during processing event %d "
                           "due to error, backtrace of the last one is below",
-                          ctx.evname);
+                          rie_xcb_event_type(ev));
                 rie_log_backtrace();
 #endif
+                free(ev);
                 goto done;
             }
 
-            if (ctx.render) {
+            free(ev);
+
+            if (pager->render) {
                 /* render errors are ignored in hope they are not permanent */
-                (void) rie_render(pager, ctx.resize);
+                (void) rie_render(pager);
+                pager->render = 0;
             }
         }
 
@@ -300,8 +267,7 @@ failed:
 
 
 static int
-rie_event_xcb_expose(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx)
+rie_event_xcb_expose(rie_t *pager, xcb_generic_event_t *ev)
 {
     xcb_expose_event_t  *expose = (xcb_expose_event_t *) ev;
 
@@ -309,7 +275,7 @@ rie_event_xcb_expose(rie_t *pager, xcb_generic_event_t *ev,
      * the last expose event in the sequence
      */
     if (expose->count == 0) {
-        ctx->render = 1;
+        pager->render = 1;
     }
 
     return RIE_OK;
@@ -317,19 +283,17 @@ rie_event_xcb_expose(rie_t *pager, xcb_generic_event_t *ev,
 
 
 static int
-rie_event_xcb_enter_notify(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx)
+rie_event_xcb_enter_notify(rie_t *pager, xcb_generic_event_t *ev)
 {
     pager->m_in = 1;
-    ctx->render = 1;
+    pager->render = 1;
 
     return RIE_OK;
 }
 
 
 static int
-rie_event_xcb_leave_notify(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx)
+rie_event_xcb_leave_notify(rie_t *pager, xcb_generic_event_t *ev)
 {
     pager->m_in = 0;
     pager->m_x = -1;
@@ -343,15 +307,14 @@ rie_event_xcb_leave_notify(rie_t *pager, xcb_generic_event_t *ev,
         pager->fwindow = NULL;
     }
 
-    ctx->render = 1;
+    pager->render = 1;
 
     return RIE_OK;
 }
 
 
 static int
-rie_event_xcb_motion_notify(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx)
+rie_event_xcb_motion_notify(rie_t *pager, xcb_generic_event_t *ev)
 {
     xcb_motion_notify_event_t  *motion = (xcb_motion_notify_event_t *) ev;
 
@@ -382,7 +345,7 @@ rie_event_xcb_motion_notify(rie_t *pager, xcb_generic_event_t *ev,
     if (new_desk != pager->selected_desktop || fwindow != pager->fwindow) {
 
         pager->selected_desktop = new_desk;
-        ctx->render = 1;
+        pager->render = 1;
     }
 
     if (pager->cfg->show_viewports && (pager->vp_rows > 1 || pager->vp_cols > 1)) {
@@ -390,7 +353,7 @@ rie_event_xcb_motion_notify(rie_t *pager, xcb_generic_event_t *ev,
         if (pager->selected_vp.x != new_x || pager->selected_vp.y != new_y) {
             pager->selected_vp.x = new_x;
             pager->selected_vp.y = new_y;
-            ctx->render = 1;
+            pager->render = 1;
         }
     }
 
@@ -423,8 +386,7 @@ rie_hidden_window_by_coords(rie_t *pager, int x, int y)
 
 
 static int
-rie_event_xcb_button_release(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx)
+rie_event_xcb_button_release(rie_t *pager, xcb_generic_event_t *ev)
 {
     xcb_button_release_event_t  *button = (xcb_button_release_event_t *) ev;
 
@@ -463,7 +425,7 @@ rie_event_xcb_button_release(rie_t *pager, xcb_generic_event_t *ev,
 
     if (button->state & pager->cfg->tile_button) {
 
-        ctx->render = 1;
+        pager->render = 1;
 
         return rie_windows_tile(pager, new_desk);
     }
@@ -497,15 +459,14 @@ rie_event_xcb_button_release(rie_t *pager, xcb_generic_event_t *ev,
         rie_log("user hit desktop %d", new_desk);
     }
 
-    ctx->render = 1;
+    pager->render = 1;
 
     return RIE_OK;
 }
 
 
 static int
-rie_event_xcb_configure_notify(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx)
+rie_event_xcb_configure_notify(rie_t *pager, xcb_generic_event_t *ev)
 {
     xcb_configure_request_event_t *xce = (xcb_configure_request_event_t *) ev;
 
@@ -516,7 +477,7 @@ rie_event_xcb_configure_notify(rie_t *pager, xcb_generic_event_t *ev,
     root = rie_xcb_get_root(pager->xcb);
 
     if (xce->window == root) {
-        ctx->render = 1;
+        pager->render = 1;
         return rie_xcb_update_root_geom(pager->xcb);
     }
 
@@ -535,15 +496,14 @@ rie_event_xcb_configure_notify(rie_t *pager, xcb_generic_event_t *ev,
         win->dead = 1;
     }
 
-    ctx->render = 1;
+    pager->render = 1;
 
     return RIE_OK;
 }
 
 
 static int
-rie_event_xcb_property_notify(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx)
+rie_event_xcb_property_notify(rie_t *pager, xcb_generic_event_t *ev)
 {
     xcb_property_notify_event_t *notify = (xcb_property_notify_event_t *) ev;
 
@@ -562,23 +522,22 @@ rie_event_xcb_property_notify(rie_t *pager, xcb_generic_event_t *ev,
 
     if (i == nevents) {
         /* ignore unknown atoms */
-        ctx->evname = "unknown propert notify";
+        rie_debug("unknown property notify event, atom #%d", atom);
         return RIE_OK;
     }
 
-    ctx->evname = rie_property_event_handlers[i].evname;
 
     if (rie_property_event_handlers[i].loggable) {
-        rie_debug("event property notify: %s", ctx->evname);
+        rie_debug("event property notify: %s",
+                  rie_property_event_handlers[i].evname);
     }
 
-    return rie_property_event_handlers[i].handler(pager, ev, ctx);
+    return rie_property_event_handlers[i].handler(pager, ev);
 }
 
 
 static int
-rie_event_number_of_desktops(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx)
+rie_event_number_of_desktops(rie_t *pager, xcb_generic_event_t *ev)
 {
     int       screen, rc, len, oldcount;
     uint32_t  ndesktops;
@@ -625,16 +584,15 @@ rie_event_number_of_desktops(rie_t *pager, xcb_generic_event_t *ev,
 
     pager->desktops = desktops;
 
-    ctx->resize = 1;
-    ctx->render = 1;
+    pager->resize = 1;
+    pager->render = 1;
 
     return RIE_OK;
 }
 
 
 static int
-rie_event_desktop_names(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx)
+rie_event_desktop_names(rie_t *pager, xcb_generic_event_t *ev)
 {
     int  rc, screen;
 
@@ -673,15 +631,14 @@ rie_event_desktop_names(rie_t *pager, xcb_generic_event_t *ev,
 
     pager->desktop_names = names;
 
-    ctx->render = 1;
+    pager->render = 1;
 
     return RIE_OK;
 }
 
 
 static int
-rie_event_current_desktop(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx)
+rie_event_current_desktop(rie_t *pager, xcb_generic_event_t *ev)
 {
     int  rc, screen;
 
@@ -703,15 +660,14 @@ rie_event_current_desktop(rie_t *pager, xcb_generic_event_t *ev,
         return RIE_OK;
     }
 
-    ctx->render = 1;
+    pager->render = 1;
 
     return RIE_OK;
 }
 
 
 static int
-rie_event_client_list(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx)
+rie_event_client_list(rie_t *pager, xcb_generic_event_t *ev)
 {
     int  rc, screen, i;
 
@@ -778,20 +734,19 @@ rie_event_client_list(rie_t *pager, xcb_generic_event_t *ev,
     pager->windows = winlist;
 
     /* trigger NET_ACTIVE_WINDOW lookup - it does not change with client list */
-    (void) rie_event_active_window(pager, ev, ctx);
+    (void) rie_event_active_window(pager, ev);
     /* focused window inside pager also needs to be updated */
     rie_window_update_pager_focus(pager);
 
     xcb_ewmh_get_windows_reply_wipe(&clients);
 
-    ctx->render = 1;
+    pager->render = 1;
     return RIE_OK;
 }
 
 
 static int
-rie_event_desktop_geometry(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx)
+rie_event_desktop_geometry(rie_t *pager, xcb_generic_event_t *ev)
 {
     int       rc, screen;
     uint32_t  w, h;
@@ -820,16 +775,15 @@ rie_event_desktop_geometry(rie_t *pager, xcb_generic_event_t *ev,
 
     rie_log("desktop geometry is %ld x %ld", w, h);
 
-    ctx->render = 1;
-    ctx->resize = 1;
+    pager->render = 1;
+    pager->resize = 1;
 
     return RIE_OK;
 }
 
 
 static int
-rie_event_wm_state(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx)
+rie_event_wm_state(rie_t *pager, xcb_generic_event_t *ev)
 {
     xcb_property_notify_event_t *xpe = (xcb_property_notify_event_t *) ev;
 
@@ -846,15 +800,14 @@ rie_event_wm_state(rie_t *pager, xcb_generic_event_t *ev,
         return RIE_ERROR;
     }
 
-    ctx->render = 1;
+    pager->render = 1;
 
     return RIE_OK;
 }
 
 
 static int
-rie_event_wm_window_type(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx)
+rie_event_wm_window_type(rie_t *pager, xcb_generic_event_t *ev)
 {
     xcb_property_notify_event_t *xpe = (xcb_property_notify_event_t *) ev;
 
@@ -871,15 +824,14 @@ rie_event_wm_window_type(rie_t *pager, xcb_generic_event_t *ev,
         return RIE_ERROR;
     }
 
-    ctx->render = 1;
+    pager->render = 1;
 
     return RIE_OK;
 }
 
 
 static int
-rie_event_wm_desktop(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx)
+rie_event_wm_desktop(rie_t *pager, xcb_generic_event_t *ev)
 {
     xcb_property_notify_event_t *xpe = (xcb_property_notify_event_t *) ev;
 
@@ -901,14 +853,13 @@ rie_event_wm_desktop(rie_t *pager, xcb_generic_event_t *ev,
         window->desktop = 0;
     }
 
-    ctx->render = 1;
+    pager->render = 1;
     return RIE_OK;
 }
 
 
 static int
-rie_event_xrootpmap_id(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx)
+rie_event_xrootpmap_id(rie_t *pager, xcb_generic_event_t *ev)
 {
     int  rc;
 
@@ -922,15 +873,14 @@ rie_event_xrootpmap_id(rie_t *pager, xcb_generic_event_t *ev,
         /* return RIE_ERROR; */
     }
 
-    ctx->render = 1;
+    pager->render = 1;
 
     return RIE_OK;
 }
 
 
 static int
-rie_event_active_window(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx)
+rie_event_active_window(rie_t *pager, xcb_generic_event_t *ev)
 {
     int       rc, i;
     uint32_t  focused;
@@ -963,15 +913,14 @@ rie_event_active_window(rie_t *pager, xcb_generic_event_t *ev,
 
     rie_window_update_pager_focus(pager);
 
-    ctx->render = 1;
+    pager->render = 1;
 
     return RIE_OK;
 }
 
 
 static int
-rie_event_workarea(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx)
+rie_event_workarea(rie_t *pager, xcb_generic_event_t *ev)
 {
     int  rc, i, screen;
 
@@ -1022,7 +971,7 @@ rie_event_workarea(rie_t *pager, xcb_generic_event_t *ev,
 
     pager->workareas = workareas;
 
-    ctx->render = 1;
+    pager->render = 1;
     return RIE_OK;
 
 fallback:
@@ -1043,14 +992,13 @@ fallback:
 
     pager->workareas = workareas;
 
-    ctx->render = 1;
+    pager->render = 1;
     return RIE_OK;
 }
 
 
 static int
-rie_event_desktop_viewport(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx)
+rie_event_desktop_viewport(rie_t *pager, xcb_generic_event_t *ev)
 {
     int           rc, i, screen;
     rie_rect_t   *viewport, root_geom;
@@ -1110,7 +1058,7 @@ rie_event_desktop_viewport(rie_t *pager, xcb_generic_event_t *ev,
         return RIE_ERROR;
     }
 
-    ctx->render = 1;
+    pager->render = 1;
 
     return RIE_OK;
 
@@ -1137,15 +1085,14 @@ fallback:
     }
     pager->viewports = viewports;
 
-    ctx->render = 1;
+    pager->render = 1;
 
     return RIE_OK;
 }
 
 
 static int
-rie_event_virtual_roots(rie_t *pager, xcb_generic_event_t *ev,
-    rie_event_state_t *ctx)
+rie_event_virtual_roots(rie_t *pager, xcb_generic_event_t *ev)
 {
     int           rc, i, screen;
     xcb_window_t *window;
@@ -1194,7 +1141,7 @@ rie_event_virtual_roots(rie_t *pager, xcb_generic_event_t *ev,
     }
     pager->virtual_roots = virtual_roots;
 
-    ctx->render = 1;
+    pager->render = 1;
 
     return RIE_OK;
 
@@ -1216,7 +1163,7 @@ fallback:
     }
     pager->virtual_roots = virtual_roots;
 
-    ctx->render = 1;
+    pager->render = 1;
 
     return RIE_OK;
 }

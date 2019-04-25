@@ -22,7 +22,7 @@
 #ifndef __RIE_RENDER_H__
 #define __RIE_RENDER_H__
 
-int rie_render(rie_t *pager, int resize_win);
+int rie_render(rie_t *pager);
 int rie_desktop_by_coords(rie_t *pager, int x, int y);
 int rie_viewport_by_coords(rie_t *pager, int x, int y, int *new_x, int *new_y);
 

@@ -49,9 +49,9 @@ static inline rie_rect_t rie_scale_to_desktop(rie_t *pager, int desk_num,
     rie_rect_t box);
 
 static void rie_count_hidden_windows(rie_t *pager, int i);
-static int rie_draw_desktops(rie_t *pager, int resize_win);
+static int rie_draw_desktops(rie_t *pager);
 static int rie_draw_windows(rie_t *pager);
-static int rie_set_pager_geometry(rie_t *pager, int resize_win, rie_rect_t *win);
+static int rie_set_pager_geometry(rie_t *pager, rie_rect_t *win);
 
 static int rie_draw_pager_background(rie_t *pager, rie_rect_t win);
 static int rie_draw_desktop(rie_t *pager, int i, int row, int col, int active);
@@ -75,13 +75,13 @@ static int rie_draw_desktop_text(rie_t *pager, rie_rect_t desk, int i);
 
 /* entry point of drawing activity */
 int
-rie_render(rie_t *pager, int resize_win)
+rie_render(rie_t *pager)
 {
     int  rc;
 
     rie_gfx_render_start(pager->gfx);
 
-    rc = rie_draw_desktops(pager, resize_win);
+    rc = rie_draw_desktops(pager);
 
     rie_gfx_render_done(pager->gfx);
 
@@ -284,14 +284,14 @@ rie_count_hidden_windows(rie_t *pager, int i)
 
 
 static int
-rie_draw_desktops(rie_t *pager, int resize_win)
+rie_draw_desktops(rie_t *pager)
 {
     int  i, row, col, wrap, m_desk;
 
     rie_rect_t  wbox;
 
     /* calculate single desktop size and thus window size */
-    if (rie_set_pager_geometry(pager, resize_win, &wbox) != RIE_OK) {
+    if (rie_set_pager_geometry(pager, &wbox) != RIE_OK) {
         return RIE_ERROR;
     }
 
@@ -380,7 +380,7 @@ rie_draw_windows(rie_t *pager)
 
 
 static int
-rie_set_pager_geometry(rie_t *pager, int resize_win, rie_rect_t *win)
+rie_set_pager_geometry(rie_t *pager, rie_rect_t *win)
 {
     int32_t   x, y;
     uint32_t  cols, rows;
@@ -463,7 +463,7 @@ rie_set_pager_geometry(rie_t *pager, int resize_win, rie_rect_t *win)
     win->w = cols * cell->w + (cols + 1) * border->w;
     win->h = rows * cell->h + (rows + 1) * border->w;
 
-    if (resize_win) {
+    if (pager->resize) {
 
         x = 0;
         y = 0;
@@ -489,6 +489,8 @@ rie_set_pager_geometry(rie_t *pager, int resize_win, rie_rect_t *win)
 
         rie_xcb_configure_window(pager->xcb, x, y, win->w, win->h);
         rie_gfx_resize(pager->gfx, win->w, win->h);
+
+        pager->resize = 0;
     }
 
     /* get actual coordinates of pager window; */

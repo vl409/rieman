@@ -648,7 +648,7 @@ rie_xcb_property_notify_atom(rie_xcb_t *xcb, xcb_property_notify_event_t *ev)
 
 
 xcb_generic_event_t *
-rie_xcb_next_event(rie_xcb_t *xcb, int *etype)
+rie_xcb_next_event(rie_xcb_t *xcb)
 {
     xcb_generic_event_t  *event;
     xcb_generic_error_t  *err;
@@ -664,8 +664,6 @@ rie_xcb_next_event(rie_xcb_t *xcb, int *etype)
         rie_xcb_handle_error0(err, "xcb_poll_for_event()");
         return NULL;
     }
-
-    *etype = event->response_type & ~0x80;
 
     return event;
 }

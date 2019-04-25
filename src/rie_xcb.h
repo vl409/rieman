@@ -60,6 +60,8 @@
 
 #define rie_xcb_handle_error0(err, msg)  rie_xcb_handle_error(err, "%s", msg)
 
+#define rie_xcb_event_type(ev)  ((ev)->response_type & ~0x80)
+
 
 /* atom names are indexed by this enum */
 typedef enum {
@@ -143,7 +145,7 @@ void rie_xcb_delete(rie_xcb_t *xcb);
 int rie_xcb_property_notify_atom(rie_xcb_t *xcb,
     xcb_property_notify_event_t *ev);
 
-xcb_generic_event_t *rie_xcb_next_event(rie_xcb_t *xcb, int *etype);
+xcb_generic_event_t *rie_xcb_next_event(rie_xcb_t *xcb);
 int rie_xcb_wait_for_event(rie_xcb_t *xcb, sigset_t *sigmask);
 
 int rie_xcb_property_get(rie_xcb_t *xcb, xcb_window_t win,
