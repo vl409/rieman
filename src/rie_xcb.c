@@ -397,6 +397,17 @@ rie_xcb_root_visual(rie_xcb_t *xcb)
 }
 
 
+xcb_atom_t
+rie_xcb_atom(rie_xcb_t *xcb, rie_atom_name_t atom_id)
+{
+    if (atom_id >= RIE_ATOM_LAST) {
+        return None;
+    }
+
+    return xcb->atoms[atom_id];
+}
+
+
 int
 rie_xcb_create_window(rie_xcb_t *xcb)
 {

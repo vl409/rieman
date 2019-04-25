@@ -125,6 +125,7 @@ xcb_connection_t *rie_xcb_get_connection(rie_xcb_t *xcb);
 xcb_window_t rie_xcb_get_root(rie_xcb_t *xcb);
 xcb_window_t rie_xcb_get_window(rie_xcb_t *xcb);
 xcb_visualtype_t *rie_xcb_root_visual(rie_xcb_t *xcb);
+xcb_atom_t rie_xcb_atom(rie_xcb_t *xcb, rie_atom_name_t atom_name);
 xcb_ewmh_connection_t *rie_xcb_ewmh(rie_xcb_t *xcb);
 int rie_xcb_screen(rie_xcb_t *xcb);
 rie_rect_t rie_xcb_root_geom(rie_xcb_t *xcb);
