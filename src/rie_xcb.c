@@ -169,7 +169,7 @@ rie_xcb_new(rie_settings_t *cfg)
     if (cfg->withdrawn) {
         xcb_icccm_wm_hints_set_withdrawn(&hints);
 
-        vcookie = xcb_icccm_set_wm_hints(xcb->xc, xcb->window, &hints);
+        vcookie = xcb_icccm_set_wm_hints_checked(xcb->xc, xcb->window, &hints);
         err = xcb_request_check(xcb->xc, vcookie);
         if (err != NULL) {
             (void) rie_xcb_handle_error0(err, "xcb_icccm_set_wm_hints");
@@ -292,7 +292,8 @@ rie_xcb_set_window_borderless(rie_xcb_t *xcb)
     };
 
 
-    vcookie = xcb_change_property(xcb->xc, XCB_PROP_MODE_REPLACE, xcb->window,
+    vcookie = xcb_change_property_checked(xcb->xc,
+                                  XCB_PROP_MODE_REPLACE, xcb->window,
                                   xcb->atoms[RIE_MOTIF_WM_HINTS],
                                   xcb->atoms[RIE_MOTIF_WM_HINTS], 32,
                                   sizeof(MWMHints) / sizeof(long), &MWMHints);
@@ -312,7 +313,8 @@ rie_xcb_set_window_title(rie_xcb_t *xcb)
     xcb_void_cookie_t     vcookie;
     xcb_generic_error_t  *err;
 
-    vcookie = xcb_change_property(xcb->xc, XCB_PROP_MODE_REPLACE, xcb->window,
+    vcookie = xcb_change_property_checked(xcb->xc,
+                                  XCB_PROP_MODE_REPLACE, xcb->window,
                                   xcb->atoms[RIE_NET_WM_NAME],
                                   xcb->atoms[RIE_UTF8_STRING], 8,
                                   sizeof(RIEMAN_TITLE) - 1, RIEMAN_TITLE);
@@ -322,7 +324,8 @@ rie_xcb_set_window_title(rie_xcb_t *xcb)
         return rie_xcb_handle_error0(err, "xcb_change_property(_NET_WM_NAME)");
     }
 
-    vcookie = xcb_change_property(xcb->xc, XCB_PROP_MODE_REPLACE, xcb->window,
+    vcookie = xcb_change_property_checked(xcb->xc,
+                                  XCB_PROP_MODE_REPLACE, xcb->window,
                                   xcb->atoms[RIE_WM_NAME],
                                   xcb->atoms[RIE_STRING], 8,
                                   sizeof(RIEMAN_TITLE) - 1, RIEMAN_TITLE);
@@ -332,7 +335,8 @@ rie_xcb_set_window_title(rie_xcb_t *xcb)
         return rie_xcb_handle_error0(err, "xcb_change_property(WM_NAME)");
     }
 
-    vcookie = xcb_change_property(xcb->xc, XCB_PROP_MODE_REPLACE, xcb->window,
+    vcookie = xcb_change_property_checked(xcb->xc,
+                                  XCB_PROP_MODE_REPLACE, xcb->window,
                                   xcb->atoms[RIE_WM_CLASS],
                                   xcb->atoms[RIE_STRING], 8,
                                   sizeof(RIEMAN_TITLE) - 1, RIEMAN_TITLE);
@@ -411,7 +415,8 @@ rie_xcb_create_window(rie_xcb_t *xcb)
 
     window = xcb_generate_id(xcb->xc);
 
-    cookie = xcb_create_window(xcb->xc, XCB_COPY_FROM_PARENT, window, xcb->root,
+    cookie = xcb_create_window_checked(xcb->xc,
+                               XCB_COPY_FROM_PARENT, window, xcb->root,
                                0, 0, 150, 150, 1,
                                XCB_WINDOW_CLASS_INPUT_OUTPUT,
                                xcb->xs->root_visual, XCB_CW_EVENT_MASK,
@@ -453,7 +458,7 @@ rie_xcb_configure_window_ext(rie_xcb_t *xcb, xcb_window_t target, int x, int y,
     values[2] = w;
     values[3] = h;
 
-    cookie = xcb_configure_window(xcb->xc, target, mask, values);
+    cookie = xcb_configure_window_checked(xcb->xc, target, mask, values);
 
     error = xcb_request_check(xcb->xc, cookie);
     if (error != NULL) {
@@ -878,9 +883,9 @@ rie_xcb_property_set_array(rie_xcb_t *xcb, xcb_window_t win,
     }
 #endif
 
-    cookie = xcb_change_property(xcb->xc, XCB_PROP_MODE_REPLACE, win,
-                                 xcb->atoms[property], xtype, 32,
-                                 array->nitems, array->data);
+    cookie = xcb_change_property_checked(xcb->xc, XCB_PROP_MODE_REPLACE, win,
+                                         xcb->atoms[property], xtype, 32,
+                                         array->nitems, array->data);
 
     error = xcb_request_check(xcb->xc, cookie);
     if (error != NULL) {
@@ -899,7 +904,7 @@ rie_xcb_property_delete(rie_xcb_t *xcb, xcb_window_t win, unsigned int property)
     xcb_void_cookie_t     vcookie;
     xcb_generic_error_t  *err;
 
-    vcookie = xcb_delete_property(xcb->xc, win, xcb->atoms[property]);
+    vcookie = xcb_delete_property_checked(xcb->xc, win, xcb->atoms[property]);
 
     err = xcb_request_check(xcb->xc, vcookie);
     if (err != NULL) {
@@ -1038,7 +1043,7 @@ rie_xcb_client_message(rie_xcb_t *xcb, xcb_window_t target,
 
     event_mask = SubstructureNotifyMask  | SubstructureRedirectMask;
 
-    cookie = xcb_send_event(xcb->xc, 0, target, event_mask,
+    cookie = xcb_send_event_checked(xcb->xc, 0, target, event_mask,
                             (const char *) &event);
 
     error = xcb_request_check(xcb->xc, cookie);
