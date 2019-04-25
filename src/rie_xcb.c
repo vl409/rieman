@@ -1478,20 +1478,28 @@ rie_xcb_handle_error_real(char *file, int line, void *xerr, char *fmt, ...)
     rc = RIE_ERROR;
 
     if (err) {
-        sprintf(buf, "request \"%s\" error %d (%s)",
-                xcb_event_get_request_label(err->major_code),
-                err->error_code,
-                xcb_event_get_error_label(err->error_code));
+        if (err->major_code <= 128) {
 
-        switch (err->error_code) {
-        case XCB_DRAWABLE:
-        case XCB_WINDOW:
-            /* indicate as a separate type of errors: pager may often
-             * fall into situations when it refers to closed window
-             */
-            rc = RIE_NOTFOUND;
-            break;
+            switch (err->error_code) {
+            case XCB_DRAWABLE:
+            case XCB_WINDOW:
+                /* indicate as a separate type of errors: pager may often
+                 * fall into situations when it refers to closed window
+                 */
+                rc = RIE_NOTFOUND;
+                break;
+            }
+
+            sprintf(buf, "request \"%s\" error %d (%s)",
+                    xcb_event_get_request_label(err->major_code),
+                    err->error_code,
+                    xcb_event_get_error_label(err->error_code));
+
+        } else {
+            sprintf(buf, "X extension error %d, major:minor %d:%d",
+                    err->error_code, err->major_code, err->minor_code);
         }
+
     }
 
     va_start(ap, fmt);
