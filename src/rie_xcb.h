@@ -135,7 +135,7 @@ xcb_screen_t *rie_xcb_get_screen(xcb_connection_t *c, int screen);
 xcb_visualtype_t *rie_xcb_find_visual(xcb_connection_t *c,
     xcb_visualid_t visual);
 
-int rie_xcb_create_window(rie_xcb_t *xcb);
+int rie_xcb_create_window(rie_xcb_t *xcb, int w, int h);
 
 int rie_xcb_get_window_geometry(rie_xcb_t *xcb, xcb_window_t *win,
     xcb_window_t *vroot, rie_rect_t *box, rie_rect_t *viewport);

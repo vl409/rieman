@@ -145,7 +145,7 @@ rie_xcb_new(rie_settings_t *cfg)
         return NULL;
     }
 
-    if (rie_xcb_create_window(xcb) != RIE_OK) {
+    if (rie_xcb_create_window(xcb, 150, 150) != RIE_OK) {
         return NULL;
     }
 
@@ -409,7 +409,7 @@ rie_xcb_atom(rie_xcb_t *xcb, rie_atom_name_t atom_id)
 
 
 int
-rie_xcb_create_window(rie_xcb_t *xcb)
+rie_xcb_create_window(rie_xcb_t *xcb, int w, int h)
 {
     uint32_t  mask;
 
@@ -428,7 +428,7 @@ rie_xcb_create_window(rie_xcb_t *xcb)
 
     cookie = xcb_create_window_checked(xcb->xc,
                                XCB_COPY_FROM_PARENT, window, xcb->root,
-                               0, 0, 150, 150, 1,
+                               0, 0, w, h, 1,
                                XCB_WINDOW_CLASS_INPUT_OUTPUT,
                                xcb->xs->root_visual, XCB_CW_EVENT_MASK,
                                &mask);
