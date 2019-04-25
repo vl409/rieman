@@ -62,7 +62,7 @@ rie_gfx_new(rie_xcb_t *xcb)
     c = rie_xcb_get_connection(xcb);
     win = rie_xcb_get_window(xcb);
 
-    gc->surface = cairo_xcb_surface_create(c,win, visual, 1, 1);
+    gc->surface = cairo_xcb_surface_create(c, win, visual, 1, 1);
 
     cs = cairo_surface_status(gc->surface);
     if (cs != CAIRO_STATUS_SUCCESS) {

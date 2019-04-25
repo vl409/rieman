@@ -116,7 +116,7 @@ rie_font_init(rie_font_ctx_t* font_ctx, rie_fc_t *fc)
     /* 'file' is allocated somewhere inside 'font' */
     FcPatternDestroy(font);
 
-    ff =cairo_ft_font_face_create_for_ft_face(ft_face, 0);
+    ff = cairo_ft_font_face_create_for_ft_face(ft_face, 0);
 
     cs = cairo_font_face_status(ff);
     if (cs != CAIRO_STATUS_SUCCESS) {
