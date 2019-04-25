@@ -638,6 +638,7 @@ rie_xcb_init_atoms(rie_xcb_t *xcb)
         }
 
         xcb->atoms[i] = r->atom;
+        rie_debug("atom '%s' is #%d", rie_atom_names[i], xcb->atoms[i]);
         free(r);
     }
 
