@@ -43,6 +43,7 @@ static int rie_event_xcb_leave_notify(rie_t *pager, xcb_generic_event_t *ev);
 static int rie_event_xcb_motion_notify(rie_t *pager, xcb_generic_event_t *ev);
 static int rie_event_xcb_button_release(rie_t *pager, xcb_generic_event_t *ev);
 static int rie_event_xcb_configure_notify(rie_t *pager, xcb_generic_event_t *ev);
+static int rie_event_xcb_destroy_notify(rie_t *pager, xcb_generic_event_t *ev);
 static int rie_event_xcb_property_notify(rie_t *pager, xcb_generic_event_t *ev);
 static int rie_event_number_of_desktops(rie_t *pager, xcb_generic_event_t *ev);
 static int rie_event_desktop_names(rie_t *pager, xcb_generic_event_t *ev);
@@ -67,6 +68,7 @@ rie_event_t rie_event_handlers[] = {
     { named(XCB_MOTION_NOTIFY),    rie_event_xcb_motion_notify,    0 },
     { named(XCB_BUTTON_RELEASE),   rie_event_xcb_button_release,   1 },
     { named(XCB_CONFIGURE_NOTIFY), rie_event_xcb_configure_notify, 1 },
+    { named(XCB_DESTROY_NOTIFY),   rie_event_xcb_destroy_notify,   0 },
     { named(XCB_PROPERTY_NOTIFY),  rie_event_xcb_property_notify,  0 }
 };
 
@@ -494,9 +496,30 @@ rie_event_xcb_configure_notify(rie_t *pager, xcb_generic_event_t *ev)
     if (rc == RIE_NOTFOUND) {
         /* we failed to obtain information about this window, ignore it */
         win->dead = 1;
+        win->desktop = 0;
     }
 
     pager->render = 1;
+
+    return RIE_OK;
+}
+
+
+static int
+rie_event_xcb_destroy_notify(rie_t *pager, xcb_generic_event_t *ev)
+{
+    /* tracking this event allows to avoid some errors in log */
+
+    xcb_destroy_notify_event_t *dn = (xcb_destroy_notify_event_t *) ev;
+
+    rie_window_t  *win;
+
+    win = rie_window_lookup(pager, dn->window);
+
+    if (win) {
+        win->dead = 1;    /* ignore this window since now */
+        win->desktop = 0; /* consider it not to occupy any desktop */
+    }
 
     return RIE_OK;
 }
@@ -714,6 +737,7 @@ rie_event_client_list(rie_t *pager, xcb_generic_event_t *ev)
         if (rc == RIE_NOTFOUND) {
             /* we failed to obtain information about this window, ignore it */
             win[i].dead = 1;
+            win[i].desktop = 0;
             continue;
         }
 
@@ -795,6 +819,11 @@ rie_event_wm_state(rie_t *pager, xcb_generic_event_t *ev)
         return RIE_OK;
     }
 
+    if (win->dead) {
+        pager->render = 1;
+        return RIE_OK;
+    }
+
     rc = rie_xcb_get_window_state(pager->xcb, win, xpe->window);
     if (rc == RIE_ERROR) {
         return RIE_ERROR;
@@ -840,6 +869,10 @@ rie_event_wm_desktop(rie_t *pager, xcb_generic_event_t *ev)
 
     window = rie_window_lookup(pager, xpe->window);
     if (window == NULL) {
+        return RIE_OK;
+    }
+
+    if (window->dead) {
         return RIE_OK;
     }
 
