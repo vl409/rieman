@@ -26,6 +26,8 @@
 #include "rie_render.h"
 #include "rie_external.h"
 
+#define RIE_PAGER_EVENT  0x2
+
 
 typedef int (*rie_event_handler_pt)(rie_t *pager, xcb_generic_event_t *ev);
 
@@ -36,6 +38,9 @@ typedef struct {
     uint8_t                loggable;
 } rie_event_t;
 
+
+static uint32_t rie_event_mask(rie_t *pager, xcb_generic_event_t *ev);
+static int rie_event_handle_pager_event(rie_t *pager, xcb_generic_event_t *ev);
 static void rie_event_reload(rie_t **ppager);
 static int rie_event_xcb_expose(rie_t *pager, xcb_generic_event_t *ev);
 static int rie_event_xcb_enter_notify(rie_t *pager, xcb_generic_event_t *ev);
@@ -148,35 +153,25 @@ rie_event_cleanup(rie_t *pager)
 int
 rie_event_loop(rie_t *pager, sigset_t *sigmask)
 {
-    int  i, rc;
+    int       rc;
+    uint32_t  mask;
 
     xcb_generic_event_t  *ev;
-
-    static size_t nevents =
-                    sizeof(rie_event_handlers) / sizeof(rie_event_handlers[0]);
 
     do {
 
         while ((ev = rie_xcb_next_event(pager->xcb))) {
+            rc = RIE_OK;
 
-            /* lookup known events */
-            for (i = 0; i < nevents; i++) {
-                if (rie_xcb_event_type(ev) == rie_event_handlers[i].id) {
-                    if (rie_event_handlers[i].loggable) {
-                        rie_debug("event %s", rie_event_handlers[i].evname);
-                    }
-                    break;
+            rie_debug("event: #%d", rie_xcb_event_type(ev));
+
+            mask = rie_event_mask(pager, ev);
+
+            if (mask & RIE_PAGER_EVENT) {
+                if (rie_event_handle_pager_event(pager, ev) != RIE_OK) {
+                    rc = RIE_ERROR;
                 }
             }
-
-            if (i == nevents) {
-                /* unknown event */
-                rie_debug("unknown event #%d", rie_xcb_event_type(ev));
-                free(ev);
-                continue;
-            }
-
-            rc = rie_event_handlers[i].handler(pager, ev);
 
             if (rc != RIE_OK) {
 
@@ -229,6 +224,41 @@ done:
 
     return EXIT_SUCCESS;
 
+}
+
+
+static uint32_t
+rie_event_mask(rie_t *pager, xcb_generic_event_t *ev)
+{
+    return RIE_PAGER_EVENT;
+}
+
+
+static int
+rie_event_handle_pager_event(rie_t *pager, xcb_generic_event_t *ev)
+{
+    int  i;
+
+    static size_t nevents =
+                    sizeof(rie_event_handlers) / sizeof(rie_event_handlers[0]);
+
+    /* lookup known events */
+    for (i = 0; i < nevents; i++) {
+        if (rie_xcb_event_type(ev) == rie_event_handlers[i].id) {
+            if (rie_event_handlers[i].loggable) {
+                rie_debug("event %s", rie_event_handlers[i].evname);
+            }
+            break;
+        }
+    }
+
+    if (i == nevents) {
+        /* unknown event */
+        rie_debug("unknown event #%d", rie_xcb_event_type(ev));
+        return RIE_OK;
+    }
+
+    return rie_event_handlers[i].handler(pager, ev);
 }
 
 
