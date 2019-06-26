@@ -221,7 +221,7 @@ rie_pager_delete(rie_t *pager, int final)
     rie_event_cleanup(pager);
     rie_skin_delete(pager->skin);
     rie_gfx_delete(pager->gfx);
-    rie_conf_cleanup(rie_conf, pager->cfg);
+    rie_conf_cleanup(&pager->cfg->meta, pager->cfg);
 
     if (final) {
         rie_xcb_delete(pager->xcb);
@@ -406,17 +406,18 @@ rie_pager_new(char *cfile, rie_log_t *log)
 
     cfg->meta.version_min = 10;
     cfg->meta.version_max = 11;
+    cfg->meta.spec = rie_conf;
 
     rie_log("using configuration file '%s'", cfile);
 
-    if (rie_conf_load(cfile, rie_conf, cfg) != RIE_OK) {
+    if (rie_conf_load(cfile, &cfg->meta, cfg) != RIE_OK) {
         rie_log_error(0, "configuration load failed");
         free(cfg);
         free(pager);
         return NULL;
     }
 
-    cfg->conf_file = cfile;
+    cfg->meta.conf_file = cfile;
 
     pager->cfg = cfg;
     pager->log = log;

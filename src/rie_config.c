@@ -610,11 +610,10 @@ rie_locate_skin_schema(char (*found)[FILENAME_MAX], unsigned char *version)
 
 
 int
-rie_conf_load(char *conf_file, rie_conf_item_t *specs, void *ctx)
+rie_conf_load(char *conf_file, rie_conf_meta_t *meta, void *ctx)
 {
     int  rc, vact, is_conf = 0;
 
-    rie_conf_meta_t   *meta;
     rie_conf_value_t   cv;
 
     xmlChar      *vers;
@@ -672,8 +671,6 @@ rie_conf_load(char *conf_file, rie_conf_item_t *specs, void *ctx)
         }
 
         vact = cv.dbl * 10;
-
-        meta = (rie_conf_meta_t *) ctx;
 
         if (vact < meta->version_min || vact > meta->version_max) {
 #if !defined(RIE_TESTS)
@@ -741,10 +738,10 @@ rie_conf_load(char *conf_file, rie_conf_item_t *specs, void *ctx)
 
     xmlSetGenericErrorFunc(doc, rie_conf_quiet_stub);
 
-    rc = rie_conf_iterate(doc, specs, NULL, ctx, rie_conf_process_key);
+    rc = rie_conf_iterate(doc, meta->spec, NULL, ctx, rie_conf_process_key);
 
     if (rc != RIE_OK) {
-        (void) rie_conf_cleanup(specs, ctx);
+        rie_conf_cleanup(meta, ctx);
     }
 
 cleanup:
@@ -771,7 +768,7 @@ cleanup:
 
 
 void
-rie_conf_cleanup(rie_conf_item_t *specs, void *ctx)
+rie_conf_cleanup(rie_conf_meta_t *meta, void *ctx)
 {
-    (void) rie_conf_iterate(NULL, specs, NULL, ctx, rie_conf_free_key);
+    (void) rie_conf_iterate(NULL, meta->spec, NULL, ctx, rie_conf_free_key);
 }

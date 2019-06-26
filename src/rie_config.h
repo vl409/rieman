@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017 Vladimir Homutov
+ * Copyright (C) 2017-2019 Vladimir Homutov
  */
 
 /*
@@ -85,7 +85,8 @@ int rie_conf_set_mask(rie_conf_item_t *spec, void *value, void *res,
 
 int rie_locate_config(char (*found)[FILENAME_MAX], char *fname);
 int rie_locate_skin(char (*found)[FILENAME_MAX], char *fname);
-int rie_conf_load(char *conf_file, rie_conf_item_t *specs, void *ctx);
-void rie_conf_cleanup(rie_conf_item_t *specs, void *ctx);
+
+int rie_conf_load(char *conf_file, rie_conf_meta_t *meta, void *ctx);
+void rie_conf_cleanup(rie_conf_meta_t *meta, void *ctx);
 
 #endif

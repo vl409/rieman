@@ -269,7 +269,7 @@ rie_event_reload(rie_t **ppager)
 
     oldpager = *ppager;
 
-    newpager = rie_pager_new(oldpager->cfg->conf_file, oldpager->log);
+    newpager = rie_pager_new(oldpager->cfg->meta.conf_file, oldpager->log);
     if (newpager == NULL) {
         goto failed;
     }

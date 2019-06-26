@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017, 2019 Vladimir Homutov
+ * Copyright (C) 2017-2019 Vladimir Homutov
  */
 
 /*
@@ -475,10 +475,11 @@ rie_skin_new(char *name, rie_gfx_t *gc)
 
     skin->meta.version_min = 10;
     skin->meta.version_max = 10;
+    skin->meta.spec = rie_skin_conf;
 
     rie_log("using skin configuration file '%s'", conf_file);
 
-    if (rie_conf_load(conf_file, rie_skin_conf, skin) != RIE_OK) {
+    if (rie_conf_load(conf_file, &skin->meta, skin) != RIE_OK) {
         rie_log_error(0, "Failed to load skin configuration file '%s'",
                       conf_file[0] ? conf_file : "-");
         goto failed;
@@ -633,7 +634,7 @@ rie_skin_delete(rie_skin_t *skin)
         skin->font_ctx = NULL;
     }
 
-    rie_conf_cleanup(rie_skin_conf, skin);
+    rie_conf_cleanup(&skin->meta, skin);
 
     free(skin);
 }

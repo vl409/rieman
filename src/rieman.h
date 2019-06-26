@@ -35,6 +35,7 @@
 #define RIEMAN_VERSION "1.0.0"
 #define RIEMAN_TITLE   "Rieman"
 
+typedef struct rie_conf_item_s rie_conf_item_t;
 typedef struct rie_settings_s  rie_settings_t;
 typedef struct rie_window_s    rie_window_t;
 typedef struct rie_image_s     rie_image_t;
@@ -78,14 +79,15 @@ typedef enum {
 } rie_tile_e;
 
 typedef struct {
-    uint32_t  version_min;      /* minimum supported version */
-    uint32_t  version_max;      /* maximum supported version */
+    uint32_t         version_min;           /* minimum supported version */
+    uint32_t         version_max;           /* maximum supported version */
+    rie_conf_item_t *spec;                  /* keys description */
+    char            *conf_file;
 } rie_conf_meta_t;
 
 struct rie_settings_s {
-    rie_conf_meta_t  meta;                  /* must be first */
 
-    char            *conf_file;
+    rie_conf_meta_t  meta;                  /* configuration metadata */
     char            *skin;                  /* skin name */
 
     uint32_t         withdrawn;
