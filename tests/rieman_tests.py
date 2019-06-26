@@ -39,7 +39,7 @@ rie_tests = [
 
         'show-verbose-version': {
             'cmd': 'build/rieman -vv',
-            'stdout': 'Rieman \d\.\d\.\d Copyright \(c\) \d\d\d\d .*prefix:.*debug:.*',
+            'stdout': 'Rieman \d\.\d\.\d Copyright \(c\) \d\d\d\d-\d\d\d\d .*prefix:.*debug:.*',
             'stderr': '^$',
             'rc': 0,
             'timeout': 1 },
