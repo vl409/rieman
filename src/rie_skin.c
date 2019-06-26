@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017 Vladimir Homutov
+ * Copyright (C) 2017, 2019 Vladimir Homutov
  */
 
 /*
@@ -65,394 +65,98 @@ static rie_conf_ref_t rie_color_ref[] = {
 };
 
 
-static rie_conf_item_t rie_tx_border_conf[][6] = {
-
-    {   /* RIE_BORDER_PAGER */
-        { "/@width", RIE_CTYPE_UINT32, "0",
-          offsetof(rie_border_t, w),  NULL, { NULL } },
-
-        { "/@color", RIE_CTYPE_REF, "black",
-          offsetof(rie_border_t, color),
-          NULL, { rie_color_ref } },
-
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",
-          offsetof(rie_border_t, alpha),  NULL, { NULL } },
-
-        { "/@src", RIE_CTYPE_STR, "",
-          offsetof(rie_border_t, tile_src),  NULL, { NULL } },
-
-        { "/@type", RIE_CTYPE_STR, "color",
-          offsetof(rie_border_t, type),
-          rie_conf_set_variants, { rie_texture_types } },
-
-        { NULL, 0, NULL, 0, NULL, { NULL } }
-    },
-    {   /* RIE_BORDER_DESKTOP_ACTIVE */
-        { "/@width", RIE_CTYPE_UINT32, "0",
-          offsetof(rie_border_t, w),  NULL, { NULL } },
-
-        { "/@color", RIE_CTYPE_REF, "black",
-          offsetof(rie_border_t, color),
-          NULL, { rie_color_ref } },
-
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",
-          offsetof(rie_border_t, alpha),  NULL, { NULL } },
-
-        { "/@src", RIE_CTYPE_STR, "",
-          offsetof(rie_border_t, tile_src),  NULL, { NULL } },
-
-        { "/@type", RIE_CTYPE_STR, "color",
-          offsetof(rie_border_t, type),
-          rie_conf_set_variants, { rie_texture_types } },
-
-        { NULL, 0, NULL, 0, NULL, { NULL } }
-    },
-    {   /* RIE_BORDER_WINDOW */
-        { "/@width", RIE_CTYPE_UINT32, "0",
-          offsetof(rie_border_t, w),  NULL, { NULL } },
-
-        { "/@color", RIE_CTYPE_REF, "black",
-          offsetof(rie_border_t, color),
-          NULL, { rie_color_ref } },
-
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",
-          offsetof(rie_border_t, alpha),  NULL, { NULL } },
-
-        { "/@src", RIE_CTYPE_STR, "",
-          offsetof(rie_border_t, tile_src),  NULL, { NULL } },
-
-        { "/@type", RIE_CTYPE_STR, "color",
-          offsetof(rie_border_t, type),
-          rie_conf_set_variants, { rie_texture_types } },
-
-        { NULL, 0, NULL, 0, NULL, { NULL } }
-    },
-    {   /* RIE_BORDER_WINDOW_FOCUSED */
-        { "/@width", RIE_CTYPE_UINT32, "0",
-          offsetof(rie_border_t, w),  NULL, { NULL } },
-
-        { "/@color", RIE_CTYPE_REF, "black",
-          offsetof(rie_border_t, color),
-          NULL, { rie_color_ref } },
-
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",
-          offsetof(rie_border_t, alpha),  NULL, { NULL } },
-
-        { "/@src", RIE_CTYPE_STR, "",
-          offsetof(rie_border_t, tile_src),  NULL, { NULL } },
-
-        { "/@type", RIE_CTYPE_STR, "color",
-          offsetof(rie_border_t, type),
-          rie_conf_set_variants, { rie_texture_types } },
-
-        { NULL, 0, NULL, 0, NULL, { NULL } }
-    },
-    {   /* RIE_BORDER_WINDOW_ATTENTION */
-        { "/@width", RIE_CTYPE_UINT32, "0",
-          offsetof(rie_border_t, w),  NULL, { NULL } },
-
-        { "/@color", RIE_CTYPE_REF, "white",
-          offsetof(rie_border_t, color),
-          NULL, { rie_color_ref } },
-
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",
-          offsetof(rie_border_t, alpha),  NULL, { NULL } },
-
-        { "/@src", RIE_CTYPE_STR, "",
-          offsetof(rie_border_t, tile_src),  NULL, { NULL } },
-
-        { "/@type", RIE_CTYPE_STR, "color",
-          offsetof(rie_border_t, type),
-          rie_conf_set_variants, { rie_texture_types } },
-    },
-    {   /* RIE_BORDER_VIEWPORT */
-        { "/@width", RIE_CTYPE_UINT32, "0",
-          offsetof(rie_border_t, w),  NULL, { NULL } },
-
-        { "/@color", RIE_CTYPE_REF, "white",
-          offsetof(rie_border_t, color),
-          NULL, { rie_color_ref } },
-
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",
-          offsetof(rie_border_t, alpha),  NULL, { NULL } },
-
-        { "/@src", RIE_CTYPE_STR, "",
-          offsetof(rie_border_t, tile_src),  NULL, { NULL } },
-
-        { "/@type", RIE_CTYPE_STR, "color",
-          offsetof(rie_border_t, type),
-          rie_conf_set_variants, { rie_texture_types } },
-
-        { NULL, 0, NULL, 0, NULL, { NULL } }
-    },
-    {   /* RIE_BORDER_VIEWPORT_ACTIVE */
-        { "/@width", RIE_CTYPE_UINT32, "0",
-          offsetof(rie_border_t, w),  NULL, { NULL } },
-
-        { "/@color", RIE_CTYPE_REF, "white",
-          offsetof(rie_border_t, color),
-          NULL, { rie_color_ref } },
-
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",
-          offsetof(rie_border_t, alpha),  NULL, { NULL } },
-
-        { "/@src", RIE_CTYPE_STR, "",
-          offsetof(rie_border_t, tile_src),  NULL, { NULL } },
-
-        { "/@type", RIE_CTYPE_STR, "color",
-          offsetof(rie_border_t, type),
-          rie_conf_set_variants, { rie_texture_types } },
-
-        { NULL, 0, NULL, 0, NULL, { NULL } }
+#define rie_border_entry(dflt_clr)                                  \
+    {                                                               \
+        { "/@width", RIE_CTYPE_UINT32, "0",                         \
+          offsetof(rie_border_t, w),  NULL, { NULL } },             \
+                                                                    \
+        { "/@color", RIE_CTYPE_REF, dflt_clr,                       \
+          offsetof(rie_border_t, color),                            \
+          NULL, { rie_color_ref } },                                \
+                                                                    \
+        { "/@alpha", RIE_CTYPE_DBL, "1.0",                          \
+          offsetof(rie_border_t, alpha),  NULL, { NULL } },         \
+                                                                    \
+        { "/@src", RIE_CTYPE_STR, "",                               \
+          offsetof(rie_border_t, tile_src),  NULL, { NULL } },      \
+                                                                    \
+        { "/@type", RIE_CTYPE_STR, "color",                         \
+          offsetof(rie_border_t, type),                             \
+          rie_conf_set_variants, { rie_texture_types } },           \
+                                                                    \
+        { NULL, 0, NULL, 0, NULL, { NULL } }                        \
     }
+
+static rie_conf_item_t rie_tx_border_conf[][6] = {
+        rie_border_entry("black"), /* RIE_BORDER_PAGER */
+        rie_border_entry("black"), /* RIE_BORDER_DESKTOP_ACTIVE */
+        rie_border_entry("black"), /* RIE_BORDER_WINDOW */
+        rie_border_entry("black"), /* RIE_BORDER_WINDOW_FOCUSED */
+        rie_border_entry("white"), /* RIE_BORDER_WINDOW_ATTENTION */
+        rie_border_entry("white"), /* RIE_BORDER_VIEWPORT */
+        rie_border_entry("white"), /* RIE_BORDER_VIEWPORT_ACTIVE */
 };
+
+
+#define rie_tx_entry(dflt_clr)                            \
+    {                                                     \
+        { "/@type", RIE_CTYPE_STR, "color",               \
+          offsetof(rie_texture_t, type),                  \
+          rie_conf_set_variants, { rie_texture_types } }, \
+                                                          \
+        { "/@color", RIE_CTYPE_REF, dflt_clr,             \
+          offsetof(rie_texture_t, color),                 \
+          NULL, { rie_color_ref } },                      \
+                                                          \
+        { "/@src", RIE_CTYPE_STR, "",                     \
+          offsetof(rie_texture_t, image),                 \
+          NULL, { NULL } },                               \
+                                                          \
+        { "/@alpha", RIE_CTYPE_DBL, "1.0",                \
+          offsetof(rie_texture_t, alpha),                 \
+          NULL, { NULL } },                               \
+                                                          \
+        { NULL, 0, NULL, 0, NULL, { NULL } }              \
+    }
 
 
 static rie_conf_item_t rie_textures_conf[][5] = {
-
-    {   /* #0 RIE_TX_BACKGROUND */
-        { "/@type", RIE_CTYPE_STR, "color",
-          offsetof(rie_texture_t, type),
-          rie_conf_set_variants, { rie_texture_types } },
-
-        { "/@color", RIE_CTYPE_REF, "black",
-          offsetof(rie_texture_t, color),
-          NULL, { rie_color_ref } },
-
-        { "/@src", RIE_CTYPE_STR, "",
-          offsetof(rie_texture_t, image),
-          NULL, { NULL } },
-
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",
-          offsetof(rie_texture_t, alpha),
-          NULL, { NULL } },
-
-        { NULL, 0, NULL, 0, NULL, { NULL } }
-    },
-    {   /* #1 RIE_TX_DESKTOP */
-        { "/@type", RIE_CTYPE_STR, "color",
-          offsetof(rie_texture_t, type),
-          rie_conf_set_variants, { rie_texture_types } },
-
-        { "/@color", RIE_CTYPE_REF, "black",
-          offsetof(rie_texture_t, color),
-          NULL, { rie_color_ref } },
-
-        { "/@src", RIE_CTYPE_STR, "",
-          offsetof(rie_texture_t, image),
-          NULL, { NULL } },
-
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",
-          offsetof(rie_texture_t, alpha),
-          NULL, { NULL } },
-
-        { NULL, 0, NULL, 0, NULL, { NULL } }
-    },
-    {   /* #2 RIE_TX_CURRENT_DESKTOP */
-        { "/@type", RIE_CTYPE_STR, "color",
-          offsetof(rie_texture_t, type),
-          rie_conf_set_variants, { rie_texture_types } },
-
-        { "/@color", RIE_CTYPE_REF, "black",
-          offsetof(rie_texture_t, color),
-          NULL, { rie_color_ref } },
-
-        { "/@src", RIE_CTYPE_STR, "",
-          offsetof(rie_texture_t, image),
-          NULL, { NULL } },
-
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",
-          offsetof(rie_texture_t, alpha),
-          NULL, { NULL } },
-
-        { NULL, 0, NULL, 0, NULL, { NULL } }
-    },
-    {   /* #3 RIE_TX_DESKTOP_NAME_BG */
-        { "/@type", RIE_CTYPE_STR, "color",
-          offsetof(rie_texture_t, type),
-          rie_conf_set_variants, { rie_texture_types } },
-
-        { "/@color", RIE_CTYPE_REF, "black",
-          offsetof(rie_texture_t, color),
-          NULL, { rie_color_ref } },
-
-        { "/@src", RIE_CTYPE_STR, "",
-          offsetof(rie_texture_t, image),
-          NULL, { NULL } },
-
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",
-          offsetof(rie_texture_t, alpha),
-          NULL, { NULL } },
-
-        { NULL, 0, NULL, 0, NULL, { NULL } }
-    },
-    {   /* #4 RIE_TX_WINDOW */
-        { "/@type", RIE_CTYPE_STR, "color",
-          offsetof(rie_texture_t, type),
-          rie_conf_set_variants, { rie_texture_types } },
-
-        { "/@color", RIE_CTYPE_REF, "black",
-          offsetof(rie_texture_t, color),
-          NULL, { rie_color_ref } },
-
-        { "/@src", RIE_CTYPE_STR, "",
-          offsetof(rie_texture_t, image),
-          NULL, { NULL } },
-
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",
-          offsetof(rie_texture_t, alpha),
-          NULL, { NULL } },
-
-        { NULL, 0, NULL, 0, NULL, { NULL } }
-    },
-    {   /* #5 RIE_TX_WINDOW_FOCUSED */
-        { "/@type", RIE_CTYPE_STR, "color",
-          offsetof(rie_texture_t, type),
-          rie_conf_set_variants, { rie_texture_types } },
-
-        { "/@color", RIE_CTYPE_REF, "black",
-          offsetof(rie_texture_t, color),
-          NULL, { rie_color_ref } },
-
-        { "/@src", RIE_CTYPE_STR, "",
-          offsetof(rie_texture_t, image),
-          NULL, { NULL } },
-
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",
-          offsetof(rie_texture_t, alpha),
-          NULL, { NULL } },
-
-        { NULL, 0, NULL, 0, NULL, { NULL } }
-    },
-    {   /* #6 RIE_TX_WINDOW_ATTENTION */
-        { "/@type", RIE_CTYPE_STR, "color",
-          offsetof(rie_texture_t, type),
-          rie_conf_set_variants, { rie_texture_types } },
-
-        { "/@color", RIE_CTYPE_REF, "white",
-          offsetof(rie_texture_t, color),
-          NULL, { rie_color_ref } },
-
-        { "/@src", RIE_CTYPE_STR, "",
-          offsetof(rie_texture_t, image),
-          NULL, { NULL } },
-
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",
-          offsetof(rie_texture_t, alpha),
-          NULL, { NULL } },
-
-        { NULL, 0, NULL, 0, NULL, { NULL } }
-    },
-    {   /* #7 RIE_TX_MISSING_ICON */
-        { "/@type", RIE_CTYPE_STR, "color",
-          offsetof(rie_texture_t, type),
-          rie_conf_set_variants, { rie_texture_types } },
-
-        { "/@color", RIE_CTYPE_REF, "white",
-          offsetof(rie_texture_t, color),
-          NULL, { rie_color_ref } },
-
-        { "/@src", RIE_CTYPE_STR, "",
-          offsetof(rie_texture_t, image),
-          NULL, { NULL } },
-
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",
-          offsetof(rie_texture_t, alpha),
-          NULL, { NULL } },
-
-        { NULL, 0, NULL, 0, NULL, { NULL } }
-    },
-    {   /* #8 RIE_TX_VIEWPORT */
-        { "/@type", RIE_CTYPE_STR, "color",
-          offsetof(rie_texture_t, type),
-          rie_conf_set_variants, { rie_texture_types } },
-
-        { "/@color", RIE_CTYPE_REF, "white",
-          offsetof(rie_texture_t, color),
-          NULL, { rie_color_ref } },
-
-        { "/@src", RIE_CTYPE_STR, "",
-          offsetof(rie_texture_t, image),
-          NULL, { NULL } },
-
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",
-          offsetof(rie_texture_t, alpha),
-          NULL, { NULL } },
-
-        { NULL, 0, NULL, 0, NULL, { NULL } }
-    },
-    {   /* #9 RIE_TX_VIEWPORT_ACTIVE */
-        { "/@type", RIE_CTYPE_STR, "color",
-          offsetof(rie_texture_t, type),
-          rie_conf_set_variants, { rie_texture_types } },
-
-        { "/@color", RIE_CTYPE_REF, "white",
-          offsetof(rie_texture_t, color),
-          NULL, { rie_color_ref } },
-
-        { "/@src", RIE_CTYPE_STR, "",
-          offsetof(rie_texture_t, image),
-          NULL, { NULL } },
-
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",
-          offsetof(rie_texture_t, alpha),
-          NULL, { NULL } },
-
-        { NULL, 0, NULL, 0, NULL, { NULL } }
-    }
+    rie_tx_entry("black"), /* RIE_TX_BACKGROUND */
+    rie_tx_entry("black"), /* RIE_TX_DESKTOP */
+    rie_tx_entry("black"), /* RIE_TX_CURRENT_DESKTOP */
+    rie_tx_entry("black"), /* RIE_TX_DESKTOP_NAME_BG */
+    rie_tx_entry("black"), /* RIE_TX_WINDOW */
+    rie_tx_entry("black"), /* RIE_TX_WINDOW_FOCUSED */
+    rie_tx_entry("white"), /* RIE_TX_WINDOW_ATTENTION */
+    rie_tx_entry("white"), /* RIE_TX_MISSING_ICON */
+    rie_tx_entry("white"), /* RIE_TX_VIEWPORT */
+    rie_tx_entry("white"), /* RIE_TX_VIEWPORT_ACTIVE */
 };
 
 
+#define rie_font_entry(fname, fsize, fclr)                \
+    {                                                     \
+        { "/@size", RIE_CTYPE_UINT32, fsize,              \
+          offsetof(rie_fc_t, points), NULL, { NULL } },   \
+                                                          \
+        { "/@face", RIE_CTYPE_STR, fname,                 \
+          offsetof(rie_fc_t, face), NULL, { NULL } },     \
+                                                          \
+        { "/@color", RIE_CTYPE_REF, fclr,                 \
+          offsetof(rie_fc_t, color),                      \
+          NULL, { rie_color_ref } },                      \
+                                                          \
+        { "/@alpha", RIE_CTYPE_DBL, "1.0",                \
+          offsetof(rie_fc_t, alpha), NULL, { NULL } },    \
+                                                          \
+        { NULL, 0, NULL, 0, NULL, { NULL } }              \
+    }
+
 static rie_conf_item_t rie_skin_font_conf[][5] = {
-
-    {   /* #0 RIE_FONT_DESKTOP_NAME */
-        { "/@size", RIE_CTYPE_UINT32, "10",
-          offsetof(rie_fc_t, points), NULL, { NULL } },
-
-        { "/@face", RIE_CTYPE_STR, "Droid Sans",
-          offsetof(rie_fc_t, face), NULL, { NULL } },
-
-        { "/@color", RIE_CTYPE_REF, "black",
-          offsetof(rie_fc_t, color),
-          NULL, { rie_color_ref } },
-
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",
-          offsetof(rie_fc_t, alpha), NULL, { NULL } },
-
-        { NULL, 0, NULL, 0, NULL, { NULL } }
-    },
-    {   /* #1 RIE_FONT_WINDOW_NAME */
-        { "/@size", RIE_CTYPE_UINT32, "10",
-          offsetof(rie_fc_t, points), NULL, { NULL } },
-
-        { "/@face", RIE_CTYPE_STR, "Droid Sans",
-          offsetof(rie_fc_t, face), NULL, { NULL } },
-
-        { "/@color", RIE_CTYPE_REF, "black",
-          offsetof(rie_fc_t, color),
-          NULL, { rie_color_ref } },
-
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",
-          offsetof(rie_fc_t, alpha), NULL, { NULL } },
-
-        { NULL, 0, NULL, 0, NULL, { NULL } }
-    },
-    {   /* #2 RIE_FONT_DESKTOP_NUMBER */
-        { "/@size", RIE_CTYPE_UINT32, "12",
-          offsetof(rie_fc_t, points), NULL, { NULL } },
-
-        { "/@face", RIE_CTYPE_STR, "Clockopia",
-          offsetof(rie_fc_t, face), NULL, { NULL } },
-
-        { "/@color", RIE_CTYPE_REF, "black",
-          offsetof(rie_fc_t, color),
-          NULL, { rie_color_ref } },
-
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",
-          offsetof(rie_fc_t, alpha), NULL, { NULL } },
-
-        { NULL, 0, NULL, 0, NULL, { NULL } }
-    },
+    rie_font_entry("Droid Sans", "10", "black"), /* RIE_FONT_DESKTOP_NAME */
+    rie_font_entry("Droid Sans", "10", "black"), /* RIE_FONT_WINDOW_NAME */
+    rie_font_entry("Clockopia",  "12", "black"), /* RIE_FONT_DESKTOP_NUMBER */
+    rie_font_entry("Droid Sans", "12", "black"), /* RIE_FONT_GUI */
 };
 
 
