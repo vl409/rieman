@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017 Vladimir Homutov
+ * Copyright (C) 2017-2019 Vladimir Homutov
  */
 
 /*
@@ -44,7 +44,6 @@ struct rie_xcb_s {
 static int rie_xcb_init_atoms(rie_xcb_t *xcb);
 static int rie_xcb_set_window_borderless(rie_xcb_t *xcb);
 static int rie_xcb_set_window_title(rie_xcb_t *xcb);
-static int rie_xcb_set_initial_state(rie_xcb_t *xcb, rie_settings_t *cfg);
 
 
 static const char *rie_atom_names[] = {
@@ -190,10 +189,6 @@ rie_xcb_new(rie_settings_t *cfg)
     }
 
     xcb_map_window(xcb->xc, xcb->window);
-
-    if (rie_xcb_set_initial_state(xcb, cfg) != RIE_OK) {
-        return NULL;
-    }
 
     xcb_flush(xcb->xc);
 
@@ -1324,38 +1319,65 @@ rie_xcb_get_window_type(rie_xcb_t *xcb, rie_window_t *window, xcb_window_t
 }
 
 
-static int
-rie_xcb_set_initial_state(rie_xcb_t *xcb, rie_settings_t *cfg)
+int
+rie_xcb_set_window_hints(rie_xcb_t *xcb, rie_settings_t *cfg,
+    uint32_t current_desktop)
 {
-    uint32_t  mask;
+    uint32_t  mask, wmhints;
     uint32_t  cmd[5];
 
     rie_atom_name_t  atom;
 
-    cmd[0] = XCB_EWMH_WM_STATE_ADD;
-    cmd[2] = 0;
-    cmd[3] = 1;
-    cmd[4] = 0;
+    wmhints = 0;
+
+    if (cfg->skip_taskbar) {
+        wmhints |= RIE_WIN_STATE_SKIP_TASKBAR;
+    }
+
+    if (cfg->skip_pager) {
+        wmhints |= RIE_WIN_STATE_SKIP_PAGER;
+    }
+
+    if (cfg->sticky) {
+        wmhints |= RIE_WIN_STATE_STICKY;
+    }
+
+    if (cfg->layer) {
+        wmhints |= cfg->layer;
+    }
+
+    cmd[2] = 0; /* second property to alter (unused) */
+    cmd[3] = 1; /* source indication, 0: not used, 1: normal app, 2: pagers */
+    cmd[4] = 0; /* unused, X11 protocol supposes 5 32-bit items */
 
     /* iterate through all known states, checking corresponding masks */
     for (atom = RIE_NET_WM_STATE_STICKY, mask = RIE_WIN_STATE_STICKY;
          atom <= RIE_NET_WM_STATE_DEMANDS_ATTENTION;
          atom++, mask <<= 1)
     {
-        if (cfg->wmhints & mask) {
-            cmd[1] = xcb->atoms[atom];
-            if (rie_xcb_client_message(xcb, xcb->root, xcb->window,
-                                       RIE_NET_WM_STATE, cmd, 5)
-                != RIE_OK)
-            {
-                return RIE_ERROR;
-            }
+        if (wmhints & mask) {
+            cmd[0] = XCB_EWMH_WM_STATE_ADD;
+
+        } else {
+            cmd[0] = XCB_EWMH_WM_STATE_REMOVE;
+        }
+
+        cmd[1] = xcb->atoms[atom];
+        if (rie_xcb_client_message(xcb, xcb->root, xcb->window,
+                                   RIE_NET_WM_STATE, cmd, 5)
+            != RIE_OK)
+        {
+            return RIE_ERROR;
         }
     }
 
     /* sticky requires additional setting for desktop number */
-    if (cfg->wmhints & RIE_WIN_STATE_STICKY) {
+    if (cfg->sticky) {
         cmd[0] = 0xFFFFFFFF;
+        return rie_xcb_client_message(xcb, xcb->root, xcb->window,
+                                      RIE_NET_WM_DESKTOP, cmd, 1);
+    } else {
+        cmd[0] = current_desktop;
         return rie_xcb_client_message(xcb, xcb->root, xcb->window,
                                       RIE_NET_WM_DESKTOP, cmd, 1);
     }

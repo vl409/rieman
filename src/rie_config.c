@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017 Vladimir Homutov
+ * Copyright (C) 2017-2019 Vladimir Homutov
  */
 
 /*
@@ -210,10 +210,10 @@ static int
 rie_conf_to_bool(char* str, rie_conf_value_t *res)
 {
     if (strcasecmp(str, "true") == 0 || strcmp(str, "1") ==0) {
-        res->bool_value = 1;
+        res->number = 1;
 
     } else if (strcasecmp(str, "false") == 0 || strcmp(str, "0") == 0) {
-        res->bool_value = 0;
+        res->number = 0;
 
     } else {
         rie_log_error(0, "conversion to bool failed: unknown value '%s'", str);
@@ -267,9 +267,7 @@ rie_conf_set_value(rie_conf_type_t type, rie_conf_value_t *val, void *res)
     case RIE_CTYPE_STR:
         *((char **) res) = val->str;
         break;
-    case RIE_CTYPE_BOOL:
-        *((uint8_t *) res) = val->bool_value;
-        break;
+    case RIE_CTYPE_BOOL:     /* bool is stored as uint32 */
     case RIE_CTYPE_UINT32:
         *((uint32_t *) res) = val->number;
         break;
@@ -483,24 +481,6 @@ rie_locate_file(char (*found)[FILENAME_MAX], char (*paths)[FILENAME_MAX],
 
 
 int
-rie_conf_set_mask(rie_conf_item_t *spec, void *value, void *res, char *key)
-{
-    int  *style = res;
-    int  *val = value;
-
-    uint32_t  mask;
-
-    mask = spec->data.u32;
-
-    if (*val) {
-        *style |= mask;
-    }
-
-    return RIE_OK;
-}
-
-
-int
 rie_conf_set_variants(rie_conf_item_t *spec, void *value, void *res,
     char *key)
 {
@@ -529,33 +509,6 @@ rie_conf_set_variants(rie_conf_item_t *spec, void *value, void *res,
 }
 
 
-int
-rie_conf_set_variants_mask(rie_conf_item_t *spec, void *value, void *res,
-    char *key)
-{
-    int        i;
-    char      *s;
-    uint32_t  *out;
-
-    rie_conf_map_t *map;
-
-    out = res;
-    s = *(char **)value;
-    map = (rie_conf_map_t *) spec->data.ptr;
-
-    for (i = 0; map[i].str; i++) {
-        if (strcmp(map[i].str, s) == 0) {
-            *out |= map[i].number;
-            free(s); /* no longer needed */
-            return RIE_OK;
-        }
-    }
-
-    rie_log_error(0, "invalid variant '%s' of key '%s'", s, key);
-    free(s);
-
-    return RIE_ERROR;
-}
 
 
 int

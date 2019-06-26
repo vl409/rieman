@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017 Vladimir Homutov
+ * Copyright (C) 2017-2019 Vladimir Homutov
  */
 
 /*
@@ -88,12 +88,12 @@ struct rie_settings_s {
     char            *conf_file;
     char            *skin;                  /* skin name */
 
-    uint8_t          withdrawn;
-    uint8_t          show_text;
-    uint8_t          show_window_icons;
-    uint8_t          show_viewports;
-    uint8_t          show_minitray;
-    uint8_t          show_pad;
+    uint32_t         withdrawn;
+    uint32_t         show_text;
+    uint32_t         show_window_icons;
+    uint32_t         show_viewports;
+    uint32_t         show_minitray;
+    uint32_t         show_pad;
     uint32_t         pad_position;
     uint32_t         pad_margin;
     uint32_t         position;
@@ -111,7 +111,11 @@ struct rie_settings_s {
 
     uint32_t         change_desktop_button;
     uint32_t         tile_button;
-    uint32_t         wmhints;               /* initial window state flags */
+
+    uint32_t         skip_taskbar;          /* initial window state flags */
+    uint32_t         skip_pager;
+    uint32_t         sticky;
+    uint32_t         layer;
 };
 
 typedef struct {

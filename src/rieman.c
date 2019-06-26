@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017 Vladimir Homutov
+ * Copyright (C) 2017-2019 Vladimir Homutov
  */
 
 /*
@@ -137,21 +137,17 @@ static rie_conf_item_t rie_conf[] = {
       offsetof(rie_settings_t, withdrawn), NULL, { NULL } },
 
     { "/rieman-conf/window/skip_taskbar/@enable", RIE_CTYPE_BOOL, "true",
-      offsetof(rie_settings_t, wmhints),
-      rie_conf_set_mask, { .u32 = RIE_WIN_STATE_SKIP_TASKBAR } },
+      offsetof(rie_settings_t, skip_taskbar), NULL, { NULL } },
 
     { "/rieman-conf/window/skip_pager/@enable", RIE_CTYPE_BOOL, "true",
-      offsetof(rie_settings_t, wmhints),
-      rie_conf_set_mask, { .u32 = RIE_WIN_STATE_SKIP_PAGER } },
+      offsetof(rie_settings_t, skip_pager), NULL, { NULL } },
 
     { "/rieman-conf/window/sticky/@enable", RIE_CTYPE_BOOL, "true",
-      offsetof(rie_settings_t, wmhints),
-      rie_conf_set_mask, { .u32 = RIE_WIN_STATE_STICKY } },
-
+      offsetof(rie_settings_t, sticky), NULL, { NULL } },
 
     { "/rieman-conf/window/layer/@value", RIE_CTYPE_STR, "normal",
-      offsetof(rie_settings_t, wmhints),
-      rie_conf_set_variants_mask, { &rie_conf_layers } },
+      offsetof(rie_settings_t, layer),
+      rie_conf_set_variants, { &rie_conf_layers } },
 
     { "/rieman-conf/window/position/@value", RIE_CTYPE_STR, "topleft",
       offsetof(rie_settings_t, position),
@@ -209,6 +205,12 @@ rie_pager_init(rie_t *pager, rie_t *oldpager)
         return RIE_ERROR;
     }
 
+    if (rie_xcb_set_window_hints(pager->xcb, pager->cfg, pager->current_desktop)
+        != RIE_OK)
+    {
+        return RIE_ERROR;
+    }
+
     return RIE_OK;
 }
 
@@ -247,7 +249,7 @@ rie_version(int verbose)
     }
 
     fprintf(stdout, "Rieman " RIEMAN_VERSION
-" Copyright (c) 2017  Vladimir Homutov\n"
+" Copyright (c) 2017-2019  Vladimir Homutov\n"
 "\n"
 "This program comes with ABSOLUTELY NO WARRANTY.\n"
 "This is free software, and you are welcome to redistribute it\n"

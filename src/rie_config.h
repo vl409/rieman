@@ -42,7 +42,6 @@ typedef enum {
 typedef union {
     char     *str;
     uint32_t  number;
-    uint8_t   bool_value;
     double    dbl;
     void     *data;
 } rie_conf_value_t;
@@ -53,12 +52,12 @@ typedef int (*rie_conf_convert_pt)(rie_conf_item_t *spec, void *value,
                                    void *res, char *key);
 
 struct rie_conf_item_s {
-    char                  *name;
-    rie_conf_type_t        type;
-    char                  *dflt;
-    off_t                  offset;
-    rie_conf_convert_pt    convert;
-    union {
+    char                  *name;    /* key, i.e. /root/some/thing  */
+    rie_conf_type_t        type;    /* destination type */
+    char                  *dflt;    /* default value as string */
+    off_t                  offset;  /* memory offset in context */
+    rie_conf_convert_pt    convert; /* convertor function for custom types */
+    union {                         /* extra args for convertor */
         void              *ptr;
         uint32_t           u32;
     } data;
