@@ -121,13 +121,14 @@ rie_xcb_new(rie_settings_t *cfg)
 
     memset(xcb, 0, sizeof(rie_xcb_t));
 
-    xcb->xc = xcb_connect (NULL, NULL);
+    /* use server set by DISPLAY environment variable, choose screeen if any */
+    xcb->xc = xcb_connect (NULL, &xcb->screen);
     if (xcb->xc == NULL) {
         rie_log_error0(0, "failed to connect to X11 Display");
         return NULL;
     }
 
-    xcb->screen = 0; /* note: multiple screens have never been tested */
+    rie_log("using X screen #%d", xcb->screen);
 
     xcb->xs = rie_xcb_get_screen(xcb->xc, xcb->screen);
     if (xcb->xs == NULL) {

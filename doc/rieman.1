@@ -94,6 +94,15 @@ To reload configuration, send
 to the rieman process. It will re-read all configuration files and apply
 changes.
 
+.SH "ENVIRONMENT VARIABLES"
+.PP
+
+The used X11 screen is taken from the
+.B DISPLAY
+environment variable.  To run rieman on the second screen run:
+.TP
+    $ DISPLAY=:0.1 rieman
+
 .SH "FILES"
 
 .PP
