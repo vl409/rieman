@@ -189,6 +189,14 @@ rie_xcb_new(rie_settings_t *cfg)
         return NULL;
     }
 
+    if (cfg->docked) {
+        if (rie_xcb_set_window_type(xcb, xcb->window,
+            RIE_NET_WM_WINDOW_TYPE_DOCK) != RIE_OK)
+        {
+            return NULL;
+        }
+    }
+
     xcb_map_window(xcb->xc, xcb->window);
 
     xcb_flush(xcb->xc);
@@ -1315,6 +1323,30 @@ rie_xcb_get_window_type(rie_xcb_t *xcb, rie_window_t *window, xcb_window_t
     xcb_ewmh_get_atoms_reply_wipe(&atoms);
 
     rie_debug("window %s type: %s", window->name, buf);
+
+    return RIE_OK;
+}
+
+
+int
+rie_xcb_set_window_type(rie_xcb_t *xcb, xcb_window_t win, rie_atom_name_t type)
+{
+    xcb_void_cookie_t       cookie;
+    xcb_generic_error_t    *err;
+    xcb_ewmh_connection_t  *ec;
+
+    xcb_atom_t  atoms[1];
+
+    atoms[0] = rie_xcb_atom(xcb, type);
+
+    ec = rie_xcb_ewmh(xcb);
+
+    cookie = xcb_ewmh_set_wm_window_type(ec, win, 1, atoms);
+
+    err = xcb_request_check(rie_xcb_get_connection(xcb), cookie);
+    if (err != NULL) {
+        return rie_xcb_handle_error0(err, "xcb_ewmh_set_window_type");
+    }
 
     return RIE_OK;
 }

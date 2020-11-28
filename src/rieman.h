@@ -91,6 +91,7 @@ struct rie_settings_s {
     char            *skin;                  /* skin name */
 
     uint32_t         withdrawn;
+    uint32_t         docked;
     uint32_t         show_text;
     uint32_t         show_window_icons;
     uint32_t         show_viewports;

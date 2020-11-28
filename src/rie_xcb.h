@@ -143,6 +143,8 @@ int rie_xcb_get_window_geometry(rie_xcb_t *xcb, xcb_window_t *win,
 rie_xcb_t *rie_xcb_new(rie_settings_t *cfg);
 void rie_xcb_delete(rie_xcb_t *xcb);
 
+int rie_xcb_set_window_type(rie_xcb_t *xcb, xcb_window_t win,
+    rie_atom_name_t type);
 int rie_xcb_set_window_hints(rie_xcb_t *xcb, rie_settings_t *cfg,
     uint32_t current_desktop);
 

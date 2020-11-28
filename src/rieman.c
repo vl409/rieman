@@ -136,6 +136,9 @@ static rie_conf_item_t rie_conf[] = {
     { "/rieman-conf/window/withdrawn/@enable", RIE_CTYPE_BOOL, "false",
       offsetof(rie_settings_t, withdrawn), NULL, { NULL } },
 
+    { "/rieman-conf/window/dock/@enable", RIE_CTYPE_BOOL, "false",
+      offsetof(rie_settings_t, docked), NULL, { NULL } },
+
     { "/rieman-conf/window/skip_taskbar/@enable", RIE_CTYPE_BOOL, "true",
       offsetof(rie_settings_t, skip_taskbar), NULL, { NULL } },
 
@@ -405,7 +408,7 @@ rie_pager_new(char *cfile, rie_log_t *log)
     memset(pager, 0, sizeof(rie_t));
 
     cfg->meta.version_min = 10;
-    cfg->meta.version_max = 11;
+    cfg->meta.version_max = 12;
     cfg->meta.spec = rie_conf;
 
     rie_log("using configuration file '%s'", cfile);
