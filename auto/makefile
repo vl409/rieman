@@ -96,6 +96,7 @@ install: build/rieman
 	install -m 644 ./conf/rieman.xml $(DESTDIR)$(DATADIR)/rieman.xml
 	install -m 644 ./conf/rieman-1.0.xsd $(DESTDIR)$(DATADIR)/rieman-1.0.xsd
 	install -m 644 ./conf/rieman-1.1.xsd $(DESTDIR)$(DATADIR)/rieman-1.1.xsd
+	install -m 644 ./conf/rieman-1.2.xsd $(DESTDIR)$(DATADIR)/rieman-1.2.xsd
 	tar cf - ./skins | (cd $(DESTDIR)$(DATADIR); tar xf -)
 	install -m 644 ./doc/rieman.1 $(DESTDIR)$(MANDIR)
 	install -m 644 ./README.md $(DESTDIR)$(DOCDIR)

@@ -118,6 +118,7 @@
     <xs:element ref='dock'         minOccurs='0' maxOccurs='1'/>
     <xs:element ref='skip_pager'   minOccurs='0' maxOccurs='1'/>
     <xs:element ref='skip_taskbar' minOccurs='0' maxOccurs='1'/>
+    <xs:element ref='struts'       minOccurs='0' maxOccurs='1'/>
    </xs:all>
   </xs:complexType>
  </xs:element>
@@ -140,6 +141,24 @@
      </xs:restriction>
     </xs:simpleType>
    </xs:attribute>
+  </xs:complexType>
+ </xs:element>
+
+ <xs:element name='struts'>
+  <xs:complexType>
+   <xs:attribute name='enable' type='xs:boolean' use='required'/>
+   <xs:attribute name='left'           type='xs:nonNegativeInteger' use='required'/>
+   <xs:attribute name='left_start_y'   type='xs:nonNegativeInteger' use='required'/>
+   <xs:attribute name='left_end_y'     type='xs:nonNegativeInteger' use='required'/>
+   <xs:attribute name='right'          type='xs:nonNegativeInteger' use='required'/>
+   <xs:attribute name='right_start_y'  type='xs:nonNegativeInteger' use='required'/>
+   <xs:attribute name='right_end_y'    type='xs:nonNegativeInteger' use='required'/>
+   <xs:attribute name='top'            type='xs:nonNegativeInteger' use='required'/>
+   <xs:attribute name='top_start_x'    type='xs:nonNegativeInteger' use='required'/>
+   <xs:attribute name='top_end_x'      type='xs:nonNegativeInteger' use='required'/>
+   <xs:attribute name='bottom'         type='xs:nonNegativeInteger' use='required'/>
+   <xs:attribute name='bottom_start_x' type='xs:nonNegativeInteger' use='required'/>
+   <xs:attribute name='bottom_end_x'   type='xs:nonNegativeInteger' use='required'/>
   </xs:complexType>
  </xs:element>
 

@@ -85,6 +85,22 @@ typedef struct {
     char            *conf_file;
 } rie_conf_meta_t;
 
+typedef struct {
+    uint32_t         enabled;
+    uint32_t         left;
+    uint32_t         left_start_y;
+    uint32_t         left_end_y;
+    uint32_t         right;
+    uint32_t         right_start_y;
+    uint32_t         right_end_y;
+    uint32_t         top;
+    uint32_t         top_start_x;
+    uint32_t         top_end_x;
+    uint32_t         bottom;
+    uint32_t         bottom_start_x;
+    uint32_t         bottom_end_x;
+} rie_struts_t;
+
 struct rie_settings_s {
 
     rie_conf_meta_t  meta;                  /* configuration metadata */
@@ -119,6 +135,8 @@ struct rie_settings_s {
     uint32_t         skip_pager;
     uint32_t         sticky;
     uint32_t         layer;
+
+    rie_struts_t     struts;
 };
 
 typedef struct {
@@ -130,7 +148,6 @@ typedef struct {
     uint32_t         lrow;
     uint32_t         lcol;
 } rie_desktop_t;
-
 
 struct rie_s {
 

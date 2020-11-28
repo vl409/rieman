@@ -156,6 +156,47 @@ static rie_conf_item_t rie_conf[] = {
       offsetof(rie_settings_t, position),
       rie_conf_set_variants, { &rie_conf_positions } },
 
+    { "/rieman-conf/window/struts/@enable", RIE_CTYPE_BOOL, "false",
+      offsetof(rie_settings_t, struts.enabled), NULL, { NULL } },
+
+
+    { "/rieman-conf/window/struts/@left", RIE_CTYPE_UINT32, "0",
+      offsetof(rie_settings_t, struts.left), NULL, { NULL } },
+
+    { "/rieman-conf/window/struts/@left_start_y", RIE_CTYPE_UINT32, "0",
+      offsetof(rie_settings_t, struts.left_start_y), NULL, { NULL } },
+
+    { "/rieman-conf/window/struts/@left_end_y", RIE_CTYPE_UINT32, "0",
+      offsetof(rie_settings_t, struts.left_end_y), NULL, { NULL } },
+
+    { "/rieman-conf/window/struts/@right", RIE_CTYPE_UINT32, "0",
+      offsetof(rie_settings_t, struts.right), NULL, { NULL } },
+
+    { "/rieman-conf/window/struts/@right_start_y", RIE_CTYPE_UINT32, "0",
+      offsetof(rie_settings_t, struts.right_start_y), NULL, { NULL } },
+
+    { "/rieman-conf/window/struts/@right_end_y", RIE_CTYPE_UINT32, "0",
+      offsetof(rie_settings_t, struts.right_end_y), NULL, { NULL } },
+
+    { "/rieman-conf/window/struts/@top", RIE_CTYPE_UINT32, "0",
+      offsetof(rie_settings_t, struts.top), NULL, { NULL } },
+
+    { "/rieman-conf/window/struts/@top_start_x", RIE_CTYPE_UINT32, "0",
+      offsetof(rie_settings_t, struts.top_start_x), NULL, { NULL } },
+
+    { "/rieman-conf/window/struts/@top_end_x", RIE_CTYPE_UINT32, "0",
+      offsetof(rie_settings_t, struts.top_end_x), NULL, { NULL } },
+
+    { "/rieman-conf/window/struts/@bottom", RIE_CTYPE_UINT32, "0",
+      offsetof(rie_settings_t, struts.bottom), NULL, { NULL } },
+
+    { "/rieman-conf/window/struts/@bottom_start_x", RIE_CTYPE_UINT32, "0",
+      offsetof(rie_settings_t, struts.bottom_start_x), NULL, { NULL } },
+
+    { "/rieman-conf/window/struts/@bottom_end_x", RIE_CTYPE_UINT32, "0",
+      offsetof(rie_settings_t, struts.bottom_end_x), NULL, { NULL } },
+
+
     { "/rieman-conf/actions/change_desktop/@mouse_button", RIE_CTYPE_STR, "left",
       offsetof(rie_settings_t, change_desktop_button),
       rie_conf_set_variants, { &rie_conf_buttons } },

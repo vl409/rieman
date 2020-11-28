@@ -116,6 +116,10 @@ typedef enum {
     RIE_NET_WM_ICON,
     RIE_XROOTPMAP_ID,
     RIE_MOTIF_WM_HINTS,
+
+    RIE_NET_WM_STRUT,
+    RIE_NET_WM_STRUT_PARTIAL,
+
     /* when adding, don't forget to update rie_atom_names[] */
     RIE_ATOM_LAST
 } rie_atom_name_t;
@@ -203,6 +207,8 @@ int rie_xcb_get_window_state(rie_xcb_t *xcb, rie_window_t *window,
 
 int rie_xcb_get_window_type(rie_xcb_t *xcb, rie_window_t *window,
     xcb_window_t xwin);
+
+int rie_xcb_set_strut(rie_xcb_t *xcb, xcb_window_t win, rie_struts_t *struts);
 
 int rie_xcb_set_desktop(rie_xcb_t *xcb, uint32_t new_desk);
 

@@ -213,6 +213,11 @@ name is shown; click on such an icon restores the window
     starts the pager in withdrawn state to put into dock/slit
 
 .TP
+.I /window/dock enable=<true | false>
+    sets window type to _NET_WM_WINDOW_TYPE_DOCK.
+    Useful for WMs that expect it.
+
+.TP
 .I /window/skip_taskbar enable=<true | false>
 
     If set, pager window is not shown in the taskbar
@@ -238,6 +243,15 @@ name is shown; click on such an icon restores the window
 .I /window/layer value="above | below | normal"
 
     Defines window layer
+
+.TP
+.I /window/struts enable=<true | false> left left_start_y left_end_y
+.I                                      right right_start_y right_end_y
+.I                                      top top_start_x top_end_x bottom
+.I                                      bottom_start_x bottom_end
+
+   If enabled, defines values for_NET_WM_STRUT/_NET_WM_STRUT_PARTIAL which
+   reserve place on screen borders for the window.
 
 .TP
 .I /actions/change_desktop enable=<true | false> mouse_button=<left | right | middle>

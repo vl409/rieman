@@ -97,7 +97,10 @@ static const char *rie_atom_names[] = {
     "_NET_WM_ICON",
 
     "_XROOTPMAP_ID",
-    "_MOTIF_WM_HINTS"
+    "_MOTIF_WM_HINTS",
+
+    "_NET_WM_STRUT",
+    "_NET_WM_STRUT_PARTIAL",
 };
 
 
@@ -193,6 +196,12 @@ rie_xcb_new(rie_settings_t *cfg)
         if (rie_xcb_set_window_type(xcb, xcb->window,
             RIE_NET_WM_WINDOW_TYPE_DOCK) != RIE_OK)
         {
+            return NULL;
+        }
+    }
+
+    if (cfg->struts.enabled) {
+        if (rie_xcb_set_strut(xcb, xcb->window, &cfg->struts) != RIE_OK) {
             return NULL;
         }
     }
@@ -1415,6 +1424,47 @@ rie_xcb_set_window_hints(rie_xcb_t *xcb, rie_settings_t *cfg,
                                       RIE_NET_WM_DESKTOP, cmd, 1);
     }
 
+    return RIE_OK;
+}
+
+
+int
+rie_xcb_set_strut(rie_xcb_t *xcb, xcb_window_t win, rie_struts_t *struts)
+{
+    xcb_void_cookie_t       cookie;
+    xcb_generic_error_t    *err;
+    xcb_ewmh_connection_t  *ec;
+
+    xcb_ewmh_wm_strut_partial_t wms = {
+        .left = struts->left,
+        .right = struts->right,
+        .top = struts->top,
+        .bottom = struts->bottom,
+        .left_start_y = struts->left_start_y,
+        .left_end_y = struts->left_end_y,
+        .right_start_y = struts->right_start_y,
+        .right_end_y = struts->right_end_y,
+        .top_start_x = struts->top_start_x,
+        .top_end_x = struts->top_end_x,
+        .bottom_start_x = struts->bottom_start_x,
+        .bottom_end_x = struts->bottom_end_x,
+    };
+
+    ec = rie_xcb_ewmh(xcb);
+
+    cookie = xcb_ewmh_set_wm_strut_partial(ec, win, wms);
+
+    err = xcb_request_check(rie_xcb_get_connection(xcb), cookie);
+    if (err != NULL) {
+        return rie_xcb_handle_error0(err, "xcb_ewmh_set_strut_partial");
+    }
+
+    cookie = xcb_ewmh_set_wm_strut(ec, win, 0, 50, 0, 0);
+
+    err = xcb_request_check(rie_xcb_get_connection(xcb), cookie);
+    if (err != NULL) {
+        return rie_xcb_handle_error0(err, "xcb_ewmh_set_strut");
+    }
     return RIE_OK;
 }
 
