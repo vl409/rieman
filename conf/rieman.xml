@@ -51,7 +51,7 @@
         <layer value="above"/>
 
         <!-- sets NET_WM_STRUT/NET_WM_STRUT_PARTIAL -->
-        <struts enable="true"
+        <struts enable="false"
                 left="0"   left_start_y="0"   left_end_y="0"
                 right="50"  right_start_y="0"  right_end_y="0"
                 top="0"    top_start_x="0"    top_end_x="0"

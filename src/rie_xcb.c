@@ -1459,7 +1459,8 @@ rie_xcb_set_strut(rie_xcb_t *xcb, xcb_window_t win, rie_struts_t *struts)
         return rie_xcb_handle_error0(err, "xcb_ewmh_set_strut_partial");
     }
 
-    cookie = xcb_ewmh_set_wm_strut(ec, win, 0, 50, 0, 0);
+    cookie = xcb_ewmh_set_wm_strut(ec, win, struts->left, struts->right,
+                                   struts->top, struts->bottom);
 
     err = xcb_request_check(rie_xcb_get_connection(xcb), cookie);
     if (err != NULL) {
