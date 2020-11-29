@@ -308,6 +308,12 @@ rie_event_xcb_expose(rie_t *pager, xcb_generic_event_t *ev)
      */
     if (expose->count == 0) {
         pager->render = 1;
+
+        if (!pager->exposed) {
+            /* resize after first expose event */
+            pager->resize = 1;
+            pager->exposed = 1;
+        }
     }
 
     return RIE_OK;

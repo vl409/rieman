@@ -186,6 +186,7 @@ struct rie_s {
     uint8_t          m_in;
     uint8_t          resize;                /* 1 if event assumes resizing */
     uint8_t          render;                /* 1 if event assumes rendering */
+    uint8_t          exposed;               /* 1 if window was exposed */
 
     rie_tile_e       current_tile_mode;
 };
