@@ -16,7 +16,8 @@ SRCS:=src/rie_event.c     \
       src/rie_config.c    \
       src/rie_xcb.c       \
       src/rie_util.c      \
-      src/rie_font.c
+      src/rie_font.c      \
+      src/rie_control.c
 
 ifeq ($(DEBUG),yes)
     # for readable cores

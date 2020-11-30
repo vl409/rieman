@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017-2019 Vladimir Homutov
+ * Copyright (C) 2017-2020 Vladimir Homutov
  */
 
 /*
@@ -25,7 +25,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <xcb/xcb_util.h>
-#include <sys/select.h>
 
 /* #define RIE_XCB_DBG */
 
@@ -698,51 +697,25 @@ rie_xcb_next_event(rie_xcb_t *xcb)
 }
 
 
-/* interruptable event waiter */
 int
-rie_xcb_wait_for_event(rie_xcb_t *xcb, sigset_t *sigmask)
+rie_xcb_get_fd(rie_xcb_t *xcb)
 {
-    int     fd, rc, err, xerr;
-    fd_set  fds;
-
-    fd = xcb_get_file_descriptor(xcb->xc);
-
-    while (1) {
-
-        FD_ZERO(&fds);
-        FD_SET(fd, &fds);
-
-        rc = pselect(fd + 1, &fds, NULL, NULL, NULL, sigmask);
-
-        err = errno;
-
-        xerr = xcb_connection_has_error(xcb->xc);
-        if (xerr) {
-            rie_log_error(0, "xcb connection error %d", xerr);
-            return RIE_ERROR;
-        }
-
-        if (rc > 0) {
-            return RIE_OK;
-        }
-
-        if (rc == 0) {
-            /* should never happen since no timeout */
-            continue;
-        }
+    return xcb_get_file_descriptor(xcb->xc);
+}
 
 
-        if (err == EINTR) {
-            return RIE_OK;
-        }
+int
+rie_xcb_event_is_error(rie_xcb_t *xcb)
+{
+    int  xerr;
 
-        rie_log_error0(errno, "select()");
-
-        return RIE_ERROR;
+    xerr = xcb_connection_has_error(xcb->xc);
+    if (xerr) {
+        rie_log_error(0, "xcb connection error %d", xerr);
+        return 1;
     }
 
-    /* unreachable */
-    return RIE_OK;
+    return 0;
 }
 
 

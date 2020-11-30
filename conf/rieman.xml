@@ -50,12 +50,14 @@
         <!-- window layer - below/above/normal -->
         <layer value="above"/>
 
-        <!-- sets NET_WM_STRUT/NET_WM_STRUT_PARTIAL -->
+        <!-- sets NET_WM_STRUT/NET_WM_STRUT_PARTIAL to reserve
+             space for the window on desktop borders
+        -->
         <struts enable="false"
-                left="0"   left_start_y="0"   left_end_y="0"
-                right="50"  right_start_y="0"  right_end_y="0"
-                top="0"    top_start_x="0"    top_end_x="0"
-                bottom="0" bottom_start_x="0" bottom_end_x="0" />
+                left="0"     left_start_y="0"   left_end_y="0"
+                right="100"  right_start_y="0"  right_end_y="0"
+                top="0"      top_start_x="0"    top_end_x="0"
+                bottom="0"   bottom_start_x="0" bottom_end_x="0" />
     </window>
 
     <actions>
@@ -63,5 +65,8 @@
         <change_desktop enable="true" mouse_button="left"/>
         <tile_windows enable="true" mouse_button="right"/>
     </actions>
+
+    <!-- rieman will listen for commands from this DGRAM unix socket  -->
+    <!-- <control socket="/path/to/.rieman.sock"/> -->
 
 </rieman-conf>

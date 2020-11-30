@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017-2019 Vladimir Homutov
+ * Copyright (C) 2017-2020 Vladimir Homutov
  */
 
 /*
@@ -37,6 +37,7 @@
 
 typedef struct rie_conf_item_s rie_conf_item_t;
 typedef struct rie_settings_s  rie_settings_t;
+typedef struct rie_control_s   rie_control_t;
 typedef struct rie_window_s    rie_window_t;
 typedef struct rie_image_s     rie_image_t;
 typedef struct rie_skin_s      rie_skin_t;
@@ -48,11 +49,12 @@ typedef struct rie_s           rie_t;
 #include "rie_log.h"
 #include "rie_gfx.h"
 #include "rie_window.h"
+#include "rie_control.h"
 
 enum rie_rc_e {
     RIE_OK = 0,
     RIE_ERROR = -1,
-    RIE_NOTFOUND = -2,
+    RIE_NOTFOUND = -2
 };
 
 enum rie_positions_e {
@@ -77,6 +79,18 @@ typedef enum {
     RIE_TILE_MODE_FAIR_WEST,
     RIE_TILE_MODE_LAST
 } rie_tile_e;
+
+typedef enum {
+    RIE_CMD_RELOAD,
+    RIE_CMD_EXIT,
+    RIE_CMD_SWITCH_DESKTOP_LEFT,
+    RIE_CMD_SWITCH_DESKTOP_RIGHT,
+    RIE_CMD_SWITCH_DESKTOP_DOWN,
+    RIE_CMD_SWITCH_DESKTOP_UP,
+    RIE_CMD_SWITCH_DESKTOP_PREV,
+    RIE_CMD_SWITCH_DESKTOP_NEXT,
+    RIE_CMD_TILE_CURRENT_DESKTOP
+} rie_command_t;
 
 typedef struct {
     uint32_t         version_min;           /* minimum supported version */
@@ -105,6 +119,7 @@ struct rie_settings_s {
 
     rie_conf_meta_t  meta;                  /* configuration metadata */
     char            *skin;                  /* skin name */
+    char            *control_socket_path;   /* socket to listen for commands */
 
     uint32_t         withdrawn;
     uint32_t         docked;
@@ -157,6 +172,7 @@ struct rie_s {
     rie_xcb_t       *xcb;                   /* X11 connection context */
     rie_gfx_t       *gfx;                   /* graphics context       */
     rie_skin_t      *skin;                  /* loaded skin object     */
+    rie_control_t   *ctl;                   /* remote control object  */
 
     rie_rect_t       desktop_geom;          /* full desktop size      */
     rie_image_t      root_bg;               /* root window background */
@@ -194,5 +210,6 @@ struct rie_s {
 rie_t *rie_pager_new(char *cfile, rie_log_t *log);
 void rie_pager_delete(rie_t *pager, int final);
 int rie_pager_init(rie_t *pager, rie_t *oldpager);
+void rie_pager_run_cmd(rie_t *pager, rie_command_t cmd);
 
 #endif

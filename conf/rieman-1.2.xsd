@@ -4,6 +4,11 @@
 <!-- CHANGES in 1.1:
      + added actions/tile_windows
      (internal) introduced 'mouse_button' type
+
+     CHANGES in 1.2:
+     + added /window/dock
+     + added /window/struts
+     + added /control
 -->
 
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
@@ -15,6 +20,7 @@
     <xs:element ref='actions'    minOccurs='0' maxOccurs='1'/>
     <xs:element ref='geometry'   minOccurs='0' maxOccurs='1'/>
     <xs:element ref='appearance' minOccurs='0' maxOccurs='1'/>
+    <xs:element ref='control'    minOccurs='0' maxOccurs='1'/>
    </xs:all>
    <xs:attribute name='version' type='xs:decimal' use='required'/>
   </xs:complexType>
@@ -24,6 +30,12 @@
   <xs:complexType>
    <xs:attribute name='width' type='xs:positiveInteger' use='required'/>
    <xs:attribute name='height' type='xs:nonNegativeInteger' use='required'/>
+  </xs:complexType>
+ </xs:element>
+
+ <xs:element name='control'>
+  <xs:complexType>
+   <xs:attribute name='socket' type='xs:string' use='required'/>
   </xs:complexType>
  </xs:element>
 

@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017-2019 Vladimir Homutov
+ * Copyright (C) 2017-2020 Vladimir Homutov
  */
 
 /*
@@ -136,9 +136,6 @@ static rie_conf_item_t rie_conf[] = {
     { "/rieman-conf/window/withdrawn/@enable", RIE_CTYPE_BOOL, "false",
       offsetof(rie_settings_t, withdrawn), NULL, { NULL } },
 
-    { "/rieman-conf/window/dock/@enable", RIE_CTYPE_BOOL, "false",
-      offsetof(rie_settings_t, docked), NULL, { NULL } },
-
     { "/rieman-conf/window/skip_taskbar/@enable", RIE_CTYPE_BOOL, "true",
       offsetof(rie_settings_t, skip_taskbar), NULL, { NULL } },
 
@@ -156,9 +153,24 @@ static rie_conf_item_t rie_conf[] = {
       offsetof(rie_settings_t, position),
       rie_conf_set_variants, { &rie_conf_positions } },
 
+
+    { "/rieman-conf/actions/change_desktop/@mouse_button", RIE_CTYPE_STR, "left",
+      offsetof(rie_settings_t, change_desktop_button),
+      rie_conf_set_variants, { &rie_conf_buttons } },
+
+    /* configuration schema 1.1 */
+
+    { "/rieman-conf/actions/tile_windows/@mouse_button", RIE_CTYPE_STR, "right",
+      offsetof(rie_settings_t, tile_button),
+      rie_conf_set_variants, { &rie_conf_buttons } },
+
+    /* configuration schema 1.2 */
+
+    { "/rieman-conf/window/dock/@enable", RIE_CTYPE_BOOL, "false",
+      offsetof(rie_settings_t, docked), NULL, { NULL } },
+
     { "/rieman-conf/window/struts/@enable", RIE_CTYPE_BOOL, "false",
       offsetof(rie_settings_t, struts.enabled), NULL, { NULL } },
-
 
     { "/rieman-conf/window/struts/@left", RIE_CTYPE_UINT32, "0",
       offsetof(rie_settings_t, struts.left), NULL, { NULL } },
@@ -196,19 +208,20 @@ static rie_conf_item_t rie_conf[] = {
     { "/rieman-conf/window/struts/@bottom_end_x", RIE_CTYPE_UINT32, "0",
       offsetof(rie_settings_t, struts.bottom_end_x), NULL, { NULL } },
 
-
-    { "/rieman-conf/actions/change_desktop/@mouse_button", RIE_CTYPE_STR, "left",
-      offsetof(rie_settings_t, change_desktop_button),
-      rie_conf_set_variants, { &rie_conf_buttons } },
-
-    /* configuration schema 1.1 */
-
-    { "/rieman-conf/actions/tile_windows/@mouse_button", RIE_CTYPE_STR, "right",
-      offsetof(rie_settings_t, tile_button),
-      rie_conf_set_variants, { &rie_conf_buttons } },
+    { "/rieman-conf/control/@socket", RIE_CTYPE_STR, "",
+      offsetof(rie_settings_t, control_socket_path), NULL, { NULL } },
 
     { NULL, 0, NULL, 0, NULL, { NULL } }
 };
+
+
+#if defined(RIE_TESTS)
+rie_t    *pagerp;
+#endif
+
+uint8_t   rie_withdraw;
+uint8_t   rie_quit;
+uint8_t   rie_reload;
 
 
 int
@@ -255,7 +268,179 @@ rie_pager_init(rie_t *pager, rie_t *oldpager)
         return RIE_ERROR;
     }
 
+    if (strlen(pager->cfg->control_socket_path)) {
+        pager->ctl = rie_control_new(pager->cfg, pager);
+        if (pager->ctl == NULL) {
+            return RIE_ERROR;
+        }
+    }
+
     return RIE_OK;
+}
+
+
+static void
+rie_switch_desktop(rie_t *pager, rie_command_t direction)
+{
+    rie_desktop_t  *desk;
+    int32_t         left, right, up, down, curr;
+
+    desk = pager->desktops.data;
+
+    curr = pager->current_desktop;
+    desk = &desk[curr];
+
+    left = right = up = down = 0;
+
+    if (direction == RIE_CMD_SWITCH_DESKTOP_PREV) {
+        if (curr == 0) {
+            return;
+        }
+        rie_xcb_set_desktop(pager->xcb, curr - 1);
+        return;
+    }
+
+    if (direction == RIE_CMD_SWITCH_DESKTOP_NEXT) {
+        if (curr == pager->desktops.nitems - 1) {
+            return;
+        }
+        rie_xcb_set_desktop(pager->xcb, curr + 1);
+        return;
+    }
+
+    if (pager->cfg->desktop.orientation == XCB_EWMH_WM_ORIENTATION_HORZ) {
+
+        switch (pager->cfg->desktop.corner) {
+        case XCB_EWMH_WM_TOPLEFT:
+        case XCB_EWMH_WM_BOTTOMLEFT:
+            left = curr - 1;
+            right = curr + 1;
+            break;
+
+        case XCB_EWMH_WM_TOPRIGHT:
+        case XCB_EWMH_WM_BOTTOMRIGHT:
+            left = curr + 1;
+            right = curr - 1;
+            break;
+        default:
+            break;
+        }
+
+        switch (pager->cfg->desktop.corner) {
+        case XCB_EWMH_WM_TOPLEFT:
+        case XCB_EWMH_WM_TOPRIGHT:
+            up = curr - pager->ncols;
+            down = curr + pager->ncols;
+            break;
+
+        case XCB_EWMH_WM_BOTTOMRIGHT:
+        case XCB_EWMH_WM_BOTTOMLEFT:
+            up = curr + pager->ncols;
+            down = curr - pager->ncols;
+            break;
+        default:
+            break;
+        }
+
+    } else { /* XCB_EWMH_WM_ORIENTATION_VERT */
+
+        switch (pager->cfg->desktop.corner) {
+        case XCB_EWMH_WM_TOPLEFT:
+        case XCB_EWMH_WM_TOPRIGHT:
+            up = curr - 1;
+            down = curr + 1;
+            break;
+
+        case XCB_EWMH_WM_BOTTOMRIGHT:
+        case XCB_EWMH_WM_BOTTOMLEFT:
+            up = curr + 1;
+            down = curr - 1;
+            break;
+        default:
+            break;
+        }
+
+        switch (pager->cfg->desktop.corner) {
+        case XCB_EWMH_WM_TOPLEFT:
+        case XCB_EWMH_WM_BOTTOMLEFT:
+            left = curr - pager->nrows;
+            right = curr + pager->nrows;
+            break;
+
+        case XCB_EWMH_WM_TOPRIGHT:
+        case XCB_EWMH_WM_BOTTOMRIGHT:
+            left = curr + pager->nrows;
+            right = curr - pager->nrows;
+            break;
+        default:
+            break;
+        }
+    }
+
+    switch (direction) {
+    case RIE_CMD_SWITCH_DESKTOP_LEFT:
+        if (desk->lcol == 0) {
+            return;
+        }
+        rie_xcb_set_desktop(pager->xcb, left);
+
+        break;
+    case RIE_CMD_SWITCH_DESKTOP_RIGHT:
+        if (desk->lcol == pager->ncols - 1) {
+            return;
+        }
+        rie_xcb_set_desktop(pager->xcb, right);
+
+    break;
+
+    case RIE_CMD_SWITCH_DESKTOP_UP:
+        if (desk->lrow == 0) {
+            return;
+        }
+        rie_xcb_set_desktop(pager->xcb, up);
+
+        break;
+    case RIE_CMD_SWITCH_DESKTOP_DOWN:
+        if (desk->lrow == pager->nrows - 1) {
+            return;
+        }
+        rie_xcb_set_desktop(pager->xcb, down);
+
+        break;
+
+    default:
+        /* make compiler happy with incomplete enum switch */
+        break;
+    }
+}
+
+
+void
+rie_pager_run_cmd(rie_t *pager, rie_command_t cmd)
+{
+    switch (cmd) {
+
+    case RIE_CMD_RELOAD:
+        rie_reload = 1; /* to be handled by event loop */
+        break;
+
+    case RIE_CMD_EXIT:
+        rie_quit = 1; /* to be handled by event loop */
+        break;
+
+    case RIE_CMD_SWITCH_DESKTOP_LEFT:
+    case RIE_CMD_SWITCH_DESKTOP_RIGHT:
+    case RIE_CMD_SWITCH_DESKTOP_UP:
+    case RIE_CMD_SWITCH_DESKTOP_DOWN:
+    case RIE_CMD_SWITCH_DESKTOP_PREV:
+    case RIE_CMD_SWITCH_DESKTOP_NEXT:
+        rie_switch_desktop(pager, cmd);
+        break;
+    case RIE_CMD_TILE_CURRENT_DESKTOP:
+        pager->render = 1;
+        (void) rie_windows_tile(pager, pager->current_desktop);
+        break;
+    }
 }
 
 
@@ -265,6 +450,7 @@ rie_pager_delete(rie_t *pager, int final)
     rie_event_cleanup(pager);
     rie_skin_delete(pager->skin);
     rie_gfx_delete(pager->gfx);
+    rie_control_delete(pager->ctl);
     rie_conf_cleanup(&pager->cfg->meta, pager->cfg);
 
     if (final) {
@@ -280,7 +466,8 @@ rie_pager_delete(rie_t *pager, int final)
 void
 rie_usage(char *p)
 {
-    fprintf(stdout, "Usage: %s [-h] [-v[v]] [-c <config>] [-w] [-l]\n", p);
+    fprintf(stdout, "Usage: %s [-h] [-v[v]] [-c <config>]"
+                    " [-w] [-l] [-m <sockpath> <msg>]\n", p);
 }
 
 
@@ -334,15 +521,6 @@ rie_version(int verbose)
                     " · LDLAGS: \"" RIE_LDFLAGS "\"\n"
            "\n");
 }
-
-
-#if defined(RIE_TESTS)
-rie_t    *pagerp;
-#endif
-
-uint8_t   rie_withdraw;
-uint8_t   rie_quit;
-uint8_t   rie_reload;
 
 
 static void
@@ -478,7 +656,7 @@ int
 main(int argc, char *argv[])
 {
     int         i;
-    char       *cfile, *logfile;
+    char       *cfile, *logfile, *sockpath, *msg;
     rie_t      *pager;
     sigset_t    sigmask;
     rie_log_t  *log;
@@ -487,6 +665,8 @@ main(int argc, char *argv[])
 
     cfile = NULL;
     logfile = NULL;
+    msg = NULL;
+    sockpath = NULL;
 
     if (argc > 1) {
 
@@ -535,10 +715,34 @@ main(int argc, char *argv[])
                 continue;
             }
 
+            if (strcmp(argv[i], "-m") == 0) {
+
+                if (argc < (i + 3)) {
+                    fprintf(stderr, "option \"-m\" requires 2 arguments\n");
+                    rie_usage(argv[0]);
+                    exit(EXIT_FAILURE);
+                }
+
+                sockpath = argv[i + 1];
+                msg = argv[i + 2];
+
+                i += 2;
+
+                continue;
+            }
+
             fprintf(stderr, "Unknown argument \"%s\"\n", argv[i]);
             rie_usage(argv[0]);
             exit(EXIT_FAILURE);
         }
+    }
+
+    if (msg) {
+        if (rie_control_send_message(sockpath, msg) != RIE_OK) {
+            exit(EXIT_FAILURE);
+        }
+
+        exit(EXIT_SUCCESS);
     }
 
     log = rie_log_new(logfile);

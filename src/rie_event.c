@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017-2019 Vladimir Homutov
+ * Copyright (C) 2017-2020 Vladimir Homutov
  */
 
 /*
@@ -26,6 +26,9 @@
 #include "rie_render.h"
 #include "rie_external.h"
 
+#include <sys/select.h>
+
+
 #define RIE_PAGER_EVENT  0x2
 
 
@@ -39,6 +42,7 @@ typedef struct {
 } rie_event_t;
 
 
+static int rie_event_wait(rie_t *pager, sigset_t *sigmask);
 static uint32_t rie_event_mask(rie_t *pager, xcb_generic_event_t *ev);
 static int rie_event_handle_pager_event(rie_t *pager, xcb_generic_event_t *ev);
 static void rie_event_reload(rie_t **ppager);
@@ -150,6 +154,66 @@ rie_event_cleanup(rie_t *pager)
 }
 
 
+/* interruptable event wait; multiplex xcb events and control socket */
+static int
+rie_event_wait(rie_t *pager, sigset_t *sigmask)
+{
+    int     xcb_fd, rc, err, ctl_sock, max;
+    fd_set  fds;
+
+    xcb_fd = rie_xcb_get_fd(pager->xcb);
+    ctl_sock = rie_control_get_fd(pager->ctl);
+
+    while (1) {
+
+        FD_ZERO(&fds);
+        FD_SET(xcb_fd, &fds);
+        if (ctl_sock != -1) {
+            FD_SET(ctl_sock, &fds);
+            max = ctl_sock > xcb_fd ? ctl_sock : xcb_fd;
+
+        } else {
+            max = xcb_fd;
+        }
+
+        rc = pselect(max + 1, &fds, NULL, NULL, NULL, sigmask);
+
+        err = errno;
+
+        if (rc > 0) {
+
+            if (ctl_sock != -1 && FD_ISSET(ctl_sock, &fds)) {
+                return rie_control_handle_socket_event(pager->ctl);
+            }
+
+            /* else: xcb event */
+
+            if (rie_xcb_event_is_error(pager->xcb)) {
+                return RIE_ERROR;
+            }
+
+            return RIE_OK;
+        }
+
+        if (rc == 0) {
+            /* should never happen since no timeout */
+            continue;
+        }
+
+        if (err == EINTR) {
+            return RIE_OK;
+        }
+
+        rie_log_error0(errno, "pselect()");
+
+        return RIE_ERROR;
+    }
+
+    /* unreachable */
+    return RIE_OK;
+}
+
+
 int
 rie_event_loop(rie_t *pager, sigset_t *sigmask)
 {
@@ -194,7 +258,7 @@ rie_event_loop(rie_t *pager, sigset_t *sigmask)
             }
         }
 
-        if (rie_xcb_wait_for_event(pager->xcb, sigmask) != RIE_OK) {
+        if (rie_event_wait(pager, sigmask) != RIE_OK) {
             goto done;
         }
 

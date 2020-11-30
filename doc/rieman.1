@@ -150,13 +150,15 @@ for the main configuration and
 .I rieman-skin
 for the skin configuration. Both have the
 .I version
-attribute, specifying used version of configuration schema. At the moment of
-writing, only one schema exist, version 1. rieman will check this version
-on start and refuse to load unsupported one.
+attribute, specifying used version of configuration schema.
+rieman will check this version on start and refuse to load unsupported one.
 
 The version attribute is optional. If not present, rieman will not try
 to validate configuration against known schema and will just try to load
 known keys from document.
+
+Existing schemas: 1, 1.1 and 1.2
+Currently the only difference is new options added to configuration file.
 
 Below is the description of available configuration keys. Root tag is omitted
 for brevity, nesting is specified using slash, attributes are specified after
@@ -266,6 +268,29 @@ name is shown; click on such an icon restores the window
     desktop, using different tiling methods in a loop. Currently supported
     method is "fair" ported from the awesome WM, in horizontal and vertical modes.
     The mouse_button arguments selects the desired button.
+
+.TP
+.I /control socket=</path/to/socket>
+
+   If set, rieman will listen for commands on UNIX DGRAM socket at specified
+   path.  To send command, run the rieman executable with -m option and provide
+   path to socket and comand, for example:
+
+.I  $ rieman -m /path/to/ctl.sock exit
+
+.SS "Recognized commands"
+
+.IP \(bu 4
+reload - reload configuration, see description above
+.IP \(bu 4
+exit - terminate the process
+.IP \(bu 4
+switch_desktop_left/right/up/down - switch desktop in 2D grid coordinates
+.IP \(bu 4
+switch_desktop_prev/next - switch to prev/next desktop by order
+.IP \(bu 4
+tile_current_desktop - tile windows on current desktop, one layout per command
+
 
 .SH "SKIN CONFIGURATION"
 
