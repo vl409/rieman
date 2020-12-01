@@ -456,7 +456,7 @@ rie_pager_delete(rie_t *pager, int final)
     rie_event_cleanup(pager);
     rie_skin_delete(pager->skin);
     rie_gfx_delete(pager->gfx);
-    rie_control_delete(pager->ctl);
+    rie_control_delete(pager->ctl, final);
     rie_conf_cleanup(&pager->cfg->meta, pager->cfg);
 
     if (final) {

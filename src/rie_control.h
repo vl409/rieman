@@ -24,7 +24,7 @@
 
 rie_control_t *rie_control_new(rie_settings_t *cfg, void *data);
 
-void rie_control_delete(rie_control_t *ctl);
+void rie_control_delete(rie_control_t *ctl, int final);
 
 int rie_control_get_fd(rie_control_t *ctl);
 

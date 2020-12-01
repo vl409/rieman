@@ -218,7 +218,7 @@ rie_control_handle_socket_event(rie_control_t *ctl)
 
 
 void
-rie_control_delete(rie_control_t *ctl)
+rie_control_delete(rie_control_t *ctl, int final)
 {
     if (ctl == NULL) {
         return;
@@ -228,7 +228,9 @@ rie_control_delete(rie_control_t *ctl)
         (void) close(ctl->fd);
     }
 
-    (void) unlink(ctl->path);
+    if (final) {
+        (void) unlink(ctl->path);
+    }
 
     free(ctl);
 }
