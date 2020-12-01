@@ -9,6 +9,7 @@
      + added /window/dock
      + added /window/struts
      + added /control
+     + added /window/position @dx @dy
 -->
 
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
@@ -153,6 +154,8 @@
      </xs:restriction>
     </xs:simpleType>
    </xs:attribute>
+   <xs:attribute name='dx'           type='xs:nonNegativeInteger' use='optional'/>
+   <xs:attribute name='dy'           type='xs:nonNegativeInteger' use='optional'/>
   </xs:complexType>
  </xs:element>
 

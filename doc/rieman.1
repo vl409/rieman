@@ -235,11 +235,14 @@ name is shown; click on such an icon restores the window
     If set, pager window appears on all desktops
 
 .TP
-.I /window/position value="topright | topleft | bottomright | bottomleft"
+.I /window/position value="topright | topleft | bottomright | bottomleft" dx=n dy=n
 
     Defines startup position on the screen. Note that in withdrawn mode
     window may be reparented and the setting will define position inside
     dock
+
+    Optional dx and dy attributes control offset from x/y border at specified
+    corner. By default, offsets are zero.
 
 .TP
 .I /window/layer value="above | below | normal"

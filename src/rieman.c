@@ -211,6 +211,12 @@ static rie_conf_item_t rie_conf[] = {
     { "/rieman-conf/control/@socket", RIE_CTYPE_STR, "",
       offsetof(rie_settings_t, control_socket_path), NULL, { NULL } },
 
+    { "/rieman-conf/window/position/@dx", RIE_CTYPE_UINT32, "0",
+      offsetof(rie_settings_t, pos_x_offset), NULL, { NULL } },
+
+    { "/rieman-conf/window/position/@dy", RIE_CTYPE_UINT32, "0",
+      offsetof(rie_settings_t, pos_y_offset), NULL, { NULL } },
+
     { NULL, 0, NULL, 0, NULL, { NULL } }
 };
 

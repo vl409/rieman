@@ -474,16 +474,24 @@ rie_set_pager_geometry(rie_t *pager, rie_rect_t *win)
 
         switch (pager->cfg->position) {
         case RIE_POS_TOPLEFT:
+            x += pager->cfg->pos_x_offset;
+            y += pager->cfg->pos_y_offset;
             break;
         case RIE_POS_TOPRIGHT:
             x = workarea->x + workarea->w - win->w;
+            x -= pager->cfg->pos_x_offset;
+            y += pager->cfg->pos_y_offset;
             break;
         case RIE_POS_BOTTOMLEFT:
             y = workarea->y + workarea->h - win->h;
+            x += pager->cfg->pos_x_offset;
+            y -= pager->cfg->pos_y_offset;
             break;
         case RIE_POS_BOTTOMRIGHT:
             x = workarea->x + workarea->w - win->w;
             y = workarea->y + workarea->h - win->h;
+            x -= pager->cfg->pos_x_offset;
+            y -= pager->cfg->pos_y_offset;
             break;
         }
 

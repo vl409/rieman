@@ -44,8 +44,8 @@
         <!-- appear on all desktops -->
         <sticky enable="true"/>
 
-        <!-- startup position on the screen -->
-        <position value="topright"/>
+        <!-- startup position on the screen and corner offset -->
+        <position value="topright" dx="0" dy="0"/>
 
         <!-- window layer - below/above/normal -->
         <layer value="above"/>

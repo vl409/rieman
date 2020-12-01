@@ -131,6 +131,8 @@ struct rie_settings_s {
     uint32_t         pad_position;
     uint32_t         pad_margin;
     uint32_t         position;
+    uint32_t         pos_x_offset;
+    uint32_t         pos_y_offset;
 
     struct {
         uint32_t     wrap;
