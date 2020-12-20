@@ -689,10 +689,20 @@ rie_event_number_of_desktops(rie_t *pager, xcb_generic_event_t *ev)
 
         /* property was not found, consider single desktop */
         ndesktops = 1;
+        pager->current_desktop = 0;
+        pager->selected_desktop = 0;
     }
 
     if (oldcount == ndesktops) {
         return RIE_OK;
+    }
+
+    if (pager->current_desktop > ndesktops - 1) {
+        pager->current_desktop = ndesktops - 1;
+    }
+
+    if (pager->selected_desktop > ndesktops - 1) {
+        pager->selected_desktop = ndesktops - 1;
     }
 
     rc = rie_array_init(&desktops, ndesktops, sizeof(rie_desktop_t), NULL);
