@@ -31,7 +31,6 @@ You will need build tools:
  * cairo      - 2D drawing
  * fontconfig - find font by name
  * freetype2  - work with fonts itself
- * libxml2    - configuration
 
 also, you will need some fonts, for example:
 
