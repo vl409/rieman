@@ -32,7 +32,7 @@
 #include <errno.h>
 
 
-#define RIEMAN_VERSION "1.0.0"
+#define RIEMAN_VERSION "1.2.0"
 #define RIEMAN_TITLE   "Rieman"
 
 typedef struct rie_conf_item_s rie_conf_item_t;
