@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017-2019 Vladimir Homutov
+ * Copyright (C) 2017-2020 Vladimir Homutov
  */
 
 /*
@@ -24,24 +24,21 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>     /* open */
 #include <unistd.h>
 #include <string.h>
 #include <strings.h>   /* strcasecmp */
-
-#include <libxml/parser.h>
-#include <libxml/xpath.h>
-#include <libxml/valid.h>
-#include <libxml/xmlschemas.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <ctype.h>
+#include <stdio.h>
 
 #define rie_conf_log_error(key, err) \
     rie_conf_log_error_real( __FILE__, __LINE__, key, err)
 
-
 typedef int (*rie_conf_type_parse_pt)(char *str, rie_conf_value_t *res);
-typedef int (*rie_conf_process_key_pt)(xmlDocPtr doc, xmlChar *key,
-    rie_conf_item_t *spec, void *res);
 
-static void rie_conf_quiet_stub(void *ctx, const char *msg, ...);
+void rie_conf_quiet_stub(void *ctx, const char *msg, ...);
 
 /* low level type convertors */
 static int rie_conf_to_str(char* str, rie_conf_value_t *res);
@@ -49,25 +46,19 @@ static int rie_conf_to_uint32(char* str, rie_conf_value_t *res);
 static int rie_conf_to_dbl(char* str, rie_conf_value_t *res);
 static int rie_conf_to_bool(char* str, rie_conf_value_t *res);
 
-static int rie_conf_get_value(xmlDocPtr doc, unsigned char *xpath,
-    xmlChar **rv);
 static int rie_conf_set_value(rie_conf_type_t type, rie_conf_value_t *val,
     void *res);
 
-static int rie_conf_process_key(xmlDocPtr doc, xmlChar *key,
-    rie_conf_item_t *spec, void *res);
-static int rie_conf_free_key(xmlDocPtr doc, xmlChar *key,
-    rie_conf_item_t *spec, void *res);
-
-static int rie_conf_iterate(xmlDocPtr doc, rie_conf_item_t *specs,
-    xmlChar *prefix, void *ctx, rie_conf_process_key_pt handler);
-
 static int rie_locate_file(char (*found)[FILENAME_MAX],
     char (*paths)[FILENAME_MAX], size_t nelts);
-static int rie_locate_config_schema(char (*found)[FILENAME_MAX],
-    unsigned char *version);
-static int rie_locate_skin_schema(char (*found)[FILENAME_MAX],
-    unsigned char *version);
+
+static int rie_conf_process_item(rie_conf_item_t *spec, void *ctx,
+    char *value);
+static int rie_conf_init_defaults(rie_conf_item_t *cf, void *ctx);
+static int rie_conf_handle_key(char *key, char*arg,
+    rie_conf_item_t *cf, void *ctx);
+static int rie_conf_parse(char *filename, rie_conf_item_t *spec, void *ctx);
+
 
 rie_conf_type_parse_pt rie_conf_type_parser[] = {
     rie_conf_to_str,     /* RIE_CTYPE_STR     */
@@ -76,39 +67,9 @@ rie_conf_type_parse_pt rie_conf_type_parser[] = {
     rie_conf_to_bool,    /* RIE_CTYPE_BOOL    */
 };
 
-
 static void
-rie_conf_log_error_real(char *file, int line, unsigned char *key, char *error)
+rie_conf_log_error_real(char *file, int line, char *key, char *error)
 {
-    size_t       len;
-    xmlErrorPtr  ex;
-
-    ex = xmlGetLastError();
-    if (ex != NULL) {
-
-        /* libxml message ends with newline, remove it */
-        len = strlen(ex->message) + 1;
-
-        char buf[len];
-
-        strcpy(buf, ex->message);
-        if (buf[len - 1] == '\n') {
-            buf[len - 1] = 0;
-        }
-
-        if (ex->file) {
-            rie_log_sys_error_real(file, line, 0,
-                                   "libxml: in '%s' line %d: "
-                                   "%s (domain %d code %d)",
-                                   ex->file, ex->line, buf, ex->domain,
-                                   ex->code, ex->message);
-        } else {
-            rie_log_sys_error_real(file, line, 0,
-                                   "libxml: %s (domain %d code %d)",
-                                   buf, ex->domain, ex->code, ex->message);
-        }
-    }
-
     if (key) {
         rie_log_sys_error_real(file, line, 0, "%s while processing key '%s'",
                                error, key);
@@ -119,7 +80,7 @@ rie_conf_log_error_real(char *file, int line, unsigned char *key, char *error)
 }
 
 
-static void
+void
 rie_conf_quiet_stub(void *ctx, const char *msg, ...)
 {
     /* nothing here */
@@ -127,7 +88,7 @@ rie_conf_quiet_stub(void *ctx, const char *msg, ...)
 
 
 static int
-rie_conf_to_str(char* str, rie_conf_value_t *res)
+rie_conf_to_str(char *str, rie_conf_value_t *res)
 {
     char  *p;
 
@@ -207,7 +168,7 @@ rie_conf_to_dbl(char* str, rie_conf_value_t *res)
 
 
 static int
-rie_conf_to_bool(char* str, rie_conf_value_t *res)
+rie_conf_to_bool(char *str, rie_conf_value_t *res)
 {
     if (strcasecmp(str, "true") == 0 || strcmp(str, "1") ==0) {
         res->number = 1;
@@ -219,42 +180,6 @@ rie_conf_to_bool(char* str, rie_conf_value_t *res)
         rie_log_error(0, "conversion to bool failed: unknown value '%s'", str);
         return RIE_ERROR;
     }
-
-    return RIE_OK;
-}
-
-
-static int
-rie_conf_get_value(xmlDocPtr doc, unsigned char *xpath, xmlChar **rv)
-{
-    xmlNodeSetPtr        nodeset;
-    xmlXPathObjectPtr    result;
-    xmlXPathContextPtr   ctx;
-
-    ctx = xmlXPathNewContext(doc);
-    if (ctx == NULL) {
-        rie_conf_log_error(xpath, "xmlXPathNewContext()");
-        return RIE_ERROR;
-    }
-
-    result = xmlXPathEvalExpression(xpath, ctx);
-    xmlXPathFreeContext(ctx);
-    if (result == NULL) {
-        rie_conf_log_error(xpath, "xmlXPathEvalExpression()");
-        return RIE_ERROR;
-    }
-
-    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-        xmlXPathFreeObject(result);
-        return RIE_NOTFOUND;
-    }
-
-    nodeset = result->nodesetval;
-
-    /* all expressions are expected to return single node */
-    *rv = xmlNodeListGetString(doc,
-                               nodeset->nodeTab[0]->xmlChildrenNode, 1);
-    xmlXPathFreeObject(result);
 
     return RIE_OK;
 }
@@ -277,174 +202,6 @@ rie_conf_set_value(rie_conf_type_t type, rie_conf_value_t *val, void *res)
     default:
         /* unknown type, should not happen */
         return RIE_ERROR;
-    }
-
-    return RIE_OK;
-}
-
-
-static int
-rie_conf_process_key(xmlDocPtr doc, xmlChar *key, rie_conf_item_t *spec,
-    void *res)
-{
-    int       rc;
-    xmlChar   prefix[FILENAME_MAX];
-    xmlChar  *value, *p;
-
-    rie_conf_ref_t    *ref;
-    rie_conf_value_t   box;
-
-    value = NULL;
-
-    rc = rie_conf_get_value(doc, key, &value);
-
-    if (rc == RIE_ERROR) {
-        return RIE_ERROR;
-    }
-
-    if (rc == RIE_NOTFOUND) {
-
-        if (spec->dflt == NULL) {
-            rie_conf_log_error(key, "value not set in config and no default");
-            return RIE_ERROR;
-        }
-
-        if (spec->type == RIE_CTYPE_REF) {
-            ref = spec->data.ptr;
-
-            rie_debug("%s : missing, using default '%s'", key, spec->dflt);
-
-            sprintf((char *) prefix, ref->xpath, spec->dflt);
-
-            return rie_conf_iterate(doc, ref->spec, prefix, res,
-                                    rie_conf_process_key);
-        }
-
-        p = (xmlChar *) spec->dflt;
-
-    } else {
-
-        if (spec->type == RIE_CTYPE_REF) {
-            ref = spec->data.ptr;
-
-            /* instantiate a template referring to actual values */
-            sprintf((char *) prefix, ref->xpath, value);
-
-            xmlFree(value);
-
-            return rie_conf_iterate(doc, ref->spec, prefix, res,
-                                    rie_conf_process_key);
-        }
-
-        p = value;
-    }
-
-    /* convert string value of key into destination type */
-    if (rie_conf_type_parser[spec->type]((char *) p, &box) != RIE_OK) {
-        rie_conf_log_error(key, "failed to convert key value");
-        rc = RIE_ERROR;
-        goto cleanup;
-    }
-
-    /* save converted value into destination according to type */
-    if (spec->convert) {
-        rc = spec->convert(spec, &box.data, res, (char *) key);
-
-    } else {
-        rc = rie_conf_set_value(spec->type, &box, res);
-    }
-
-    rie_debug("%s = %s%s", key, p, (p == value) ? "" : " [default]");
-
-cleanup:
-
-    if (value) {
-        xmlFree(value);
-    }
-
-    return rc;
-}
-
-
-static int
-rie_conf_free_key(xmlDocPtr doc, xmlChar *key, rie_conf_item_t *spec,
-    void *res)
-{
-    int        rc;
-    char     **conf_key, *mem;
-    xmlChar   *value;
-    xmlChar    prefix[FILENAME_MAX];
-
-    rie_conf_ref_t  *ref;
-
-    value = NULL;
-
-    rc = rie_conf_get_value(doc, key, &value);
-
-    if (rc == RIE_ERROR) {
-        return RIE_ERROR;
-    }
-
-    if (spec->type == RIE_CTYPE_STR && spec->convert == NULL) {
-        /* converters free source string by themselves */
-
-        conf_key = (char **) res;
-        mem = *conf_key;
-
-        if (mem) {
-            free(mem);
-            *conf_key = NULL;
-        }
-    }
-
-    if (spec->type == RIE_CTYPE_REF) {
-        ref = spec->data.ptr;
-
-        /* instantiate a template referring to actual values */
-        sprintf((char *) prefix, ref->xpath, value);
-
-        xmlFree(value);
-
-        return rie_conf_iterate(doc, ref->spec, prefix, res,
-                                rie_conf_free_key);
-    }
-
-    return RIE_OK;
-}
-
-
-static int
-rie_conf_iterate(xmlDocPtr doc, rie_conf_item_t *specs, xmlChar *prefix,
-    void *ctx, rie_conf_process_key_pt handler)
-{
-    void             *res;
-    rie_conf_item_t  *spec;
-
-    xmlChar           key[FILENAME_MAX];
-
-    for (spec = specs; spec->name; spec++) {
-
-        if (prefix) {
-            (void) sprintf((char *) key, "%s%s", prefix, spec->name);
-
-        } else {
-            (void) sprintf((char *) key, "%s", spec->name);
-        }
-
-        res = (char *) ctx + spec->offset;
-
-        if (spec->type == RIE_CTYPE_CHAIN) {
-            if (rie_conf_iterate(doc, spec->data.ptr, key, res, handler)
-                != RIE_OK)
-            {
-                return RIE_ERROR;
-            }
-            continue;
-        }
-
-        if (handler(doc, key, spec, res) != RIE_OK) {
-            return RIE_ERROR;
-        }
     }
 
     return RIE_OK;
@@ -509,8 +266,6 @@ rie_conf_set_variants(rie_conf_item_t *spec, void *value, void *res,
 }
 
 
-
-
 int
 rie_locate_config(char (*found)[FILENAME_MAX], char *fname)
 {
@@ -542,26 +297,6 @@ rie_locate_config(char (*found)[FILENAME_MAX], char *fname)
 }
 
 
-static int
-rie_locate_config_schema(char (*found)[FILENAME_MAX], unsigned char *version)
-{
-    int   last = 0;
-
-#if defined(RIE_TESTS)
-    char  locations[3][FILENAME_MAX] = { {0}, {0}, {0} };
-    sprintf(locations[last++], "./tests/conf/rieman-%s.xsd", version);
-#else
-    char  locations[2][FILENAME_MAX] = { {0}, {0} };
-#endif
-
-    sprintf(locations[last++], "./conf/rieman-%s.xsd", version);
-
-    sprintf(locations[last++], "%s/rieman-%s.xsd", RIE_DATADIR, version);
-
-    return rie_locate_file(found, locations, last);
-}
-
-
 int
 rie_locate_skin(char (*found)[FILENAME_MAX], char *fname)
 {
@@ -572,22 +307,22 @@ rie_locate_skin(char (*found)[FILENAME_MAX], char *fname)
 
     last = 0;
 
-    sprintf(locations[last++], "./skins/%s/rieman_skin.xml", fname);
+    sprintf(locations[last++], "./skins/%s/rieman_skin.conf", fname);
 
     home = getenv("XDG_DATA_HOME");
     if (home) {
-        sprintf(locations[last++], "%s/rieman/skins/%s/rieman_skin.xml",
+        sprintf(locations[last++], "%s/rieman/skins/%s/rieman_skin.conf",
                 home, fname);
     }
 
     home = getenv("HOME");
     if (home) {
        sprintf(locations[last++],
-               "%s/.local/share/rieman/skins/%s/rieman_skin.xml",
+               "%s/.local/share/rieman/skins/%s/rieman_skin.conf",
                home, fname);
     }
 
-    sprintf(locations[last++], "%s/skins/%s/rieman_skin.xml", RIE_DATADIR,
+    sprintf(locations[last++], "%s/skins/%s/rieman_skin.conf", RIE_DATADIR,
             fname);
 
     return rie_locate_file(found, locations, last);
@@ -595,180 +330,348 @@ rie_locate_skin(char (*found)[FILENAME_MAX], char *fname)
 
 
 static int
-rie_locate_skin_schema(char (*found)[FILENAME_MAX], unsigned char *version)
+rie_conf_process_item(rie_conf_item_t *spec, void *ctx, char *value)
 {
-    int   last = 0;
-    char  locations[2][FILENAME_MAX] = { {0}, {0} };
+    int                rc;
+    void              *res;
+    rie_conf_value_t   box;
 
-    sprintf(locations[last++], "./skins/rieman-skin-%s.xsd", version);
+    /* convert string value of key into destination type */
+    if (rie_conf_type_parser[spec->type](value, &box) != RIE_OK) {
+        rie_conf_log_error(spec->name, "failed to convert key value");
+        return RIE_ERROR;
+    }
 
-    sprintf(locations[last++], "%s/skins/rieman-skin-%s.xsd",
-                               RIE_DATADIR, version);
+    res = (char *) ctx + spec->offset;
 
-    return rie_locate_file(found, locations, last);
+    /* save converted value into destination according to type */
+    if (spec->convert) {
+        rc = spec->convert(spec, &box.data, res, spec->name);
+
+    } else {
+        rc = rie_conf_set_value(spec->type, &box, res);
+    }
+
+    if (rc != RIE_OK) {
+        return RIE_ERROR;
+    }
+
+    spec->initialized = 1;
+
+    return RIE_OK;
+
+}
+
+
+static int
+rie_conf_init_defaults(rie_conf_item_t *cf, void *ctx)
+{
+    char             *value;
+    rie_conf_item_t  *spec;
+
+    for (spec = cf; spec->name; spec++) {
+        if (spec->initialized) {
+            continue;
+        }
+
+        if (spec->dflt == NULL) {
+            rie_conf_log_error(spec->name,
+                               "value not set in config and no default");
+            return RIE_ERROR;
+        }
+
+        value = (char *) spec->dflt;
+
+        if (rie_conf_process_item(spec, ctx, value) != RIE_OK) {
+            return RIE_ERROR;
+        }
+    }
+
+    return RIE_OK;
+}
+
+
+static int
+rie_conf_handle_key(char *key, char *arg, rie_conf_item_t *cf, void *ctx)
+{
+    rie_conf_item_t  *spec;
+
+    rie_debug("processing key \"%s\" arg \"%s\"", key, arg);
+
+    for (spec = cf; spec->name; spec++) {
+        if (strcmp(spec->name, key) == 0) {
+
+            if (rie_conf_process_item(spec, ctx, arg) != RIE_OK) {
+                return RIE_ERROR;
+            }
+
+            return RIE_OK;
+        }
+    }
+
+    rie_log_error(0, "unknown configuration directive: \"%s\"", key);
+
+    return RIE_ERROR;
+}
+
+
+static inline void
+rie_conf_strip_tail(char *tail)
+{
+    char *p;
+    p = tail - 1;
+
+    while (isspace(*p)) {
+        *p = 0;
+        p--;
+    }
+}
+
+
+static int
+rie_conf_parse(char *filename, rie_conf_item_t *spec, void *ctx)
+{
+    int    fd;
+    char  *buf, *p, *end, *key, *arg, *lpos, *errmsg;
+
+    size_t       lnum;
+    ssize_t      n;
+    struct stat  sb;
+
+    enum {
+        ST_PRE,
+        ST_KEY,
+        ST_DIV,
+        ST_ARG,
+        ST_TAIL
+    } state;
+
+    buf = NULL;
+    key = NULL;
+    arg = NULL;
+    errmsg = NULL;
+
+    fd = open(filename, O_RDONLY);
+    if (fd == -1) {
+        rie_log_error(errno, "open(\"%s\") failed", filename);
+        return RIE_ERROR;
+    }
+
+    if (fstat(fd, &sb) == -1) {
+        rie_log_error(errno, "fstat(\"%s\") failed", filename);
+        goto failed;
+    }
+
+    buf = malloc(sb.st_size +1);
+    if (buf == NULL) {
+        rie_log_error(errno, "malloc");
+        goto failed;
+    }
+
+    n = read(fd, buf, sb.st_size);
+    if (n == -1) {
+        rie_log_error(errno, "read(\"%s\") failed", filename);
+        goto failed;
+    }
+
+    if (n != sb.st_size) {
+        rie_log_error(0, "cannot read full file");
+        goto failed;
+    }
+
+    p = buf;
+    end = p + n;
+    lnum = 1;
+    lpos = p;
+
+    state = ST_PRE;
+
+    while (p < end) {
+
+        switch (state) {
+        case ST_PRE:
+
+            if (*p == '#') {
+                state = ST_TAIL;
+
+            } else if (isalnum(*p) || ispunct(*p)) {
+                state = ST_KEY;
+                key = p;
+
+            } else if (*p == '\n') {
+                lnum++;
+                lpos = p + 1;
+
+            } else if (!(isspace(*p))) {
+                errmsg = "unexpected symbol while looking for key";
+                goto failed;
+            }
+
+            break;
+
+        case ST_KEY:
+
+            if (*p == '\n' || *p == '#') {
+                errmsg = "key without value";
+                goto failed;
+
+            } else if (isspace(*p)) {
+                *p = 0;
+                state = ST_DIV;
+
+            } else if (isalnum(*p) || ispunct(*p)) {
+                /* consuming key... */
+
+            } else {
+                errmsg = "unexpected symbol while processing key";
+                goto failed;
+            }
+
+            break;
+
+        case ST_DIV:
+
+            if (*p == '\n' || *p == '#') {
+                errmsg = "key without value";
+                goto failed;
+
+            } else if (isalnum(*p) || ispunct(*p)) {
+                state = ST_ARG;
+                arg = p;
+
+            } else if (!isspace(*p)) {
+                errmsg = "unexpected symbol while looking for argument";
+                goto failed;
+            }
+
+            break;
+
+        case ST_ARG:
+
+            if (*p == '\n') {
+                state = ST_PRE;
+                lnum++;
+                lpos = p + 1;
+
+                *p = 0;
+                rie_conf_strip_tail(p);
+
+                if (rie_conf_handle_key(key, arg, spec, ctx) != RIE_OK) {
+                    goto failed;
+                }
+
+            } else if (*p == '#') {
+                *p = 0;
+                state = ST_TAIL;
+                rie_conf_strip_tail(p);
+
+                if (rie_conf_handle_key(key, arg, spec, ctx) != RIE_OK) {
+                    goto failed;
+                }
+            } else if (isalnum(*p) || ispunct(*p) || isspace(*p)) {
+
+                /* consuming key */
+
+            } else {
+                errmsg = "unexpected symbol while processing argument";
+                goto failed;
+            }
+
+            break;
+
+        case ST_TAIL:
+            if (*p == '\n') {
+                state = ST_PRE;
+                lnum++;
+                lpos = p + 1;
+            }
+            break;
+        }
+
+        p++;
+    }
+
+    switch (state) {
+    case ST_PRE:
+    case ST_TAIL:
+        /* all good, nothing to do */
+        break;
+
+    case ST_KEY:
+    case ST_DIV:
+        errmsg = "key without value";
+        goto failed;
+
+    case ST_ARG:
+        *p = 0;
+        rie_conf_strip_tail(p);
+
+        if (rie_conf_handle_key(key, arg, spec, ctx) != RIE_OK) {
+            goto failed;
+        }
+        break;
+    }
+
+    (void) close(fd);
+    free(buf);
+
+    return RIE_OK;
+
+failed:
+
+    if (errmsg) {
+        rie_log_error(0, "syntax error at line %ld pos %ld: %s",
+                      lnum, p - lpos, errmsg);
+    }
+
+    close(fd);
+
+    if (buf) {
+        free(buf);
+    }
+
+    return RIE_ERROR;
 }
 
 
 int
 rie_conf_load(char *conf_file, rie_conf_meta_t *meta, void *ctx)
 {
-    int  rc, vact, is_conf = 0;
-
-    rie_conf_value_t   cv;
-
-    xmlChar      *vers;
-    xmlDocPtr     doc;
-    xmlNodePtr    root;
-    xmlSchemaPtr  schema;
-
-    xmlSchemaValidCtxtPtr  validator;
-    xmlSchemaParserCtxtPtr schema_parser;
-
-    char schema_file[FILENAME_MAX];
-
-    schema = NULL;
-    validator = NULL;
-    schema_parser = NULL;
-
-    doc = xmlReadFile(conf_file, NULL, XML_PARSE_PEDANTIC);
-    if (doc == NULL) {
-        rie_log_error(0, "failed to parse configuration file \"%s\"", conf_file);
+    if (rie_conf_parse(conf_file, meta->spec, ctx) != RIE_OK) {
+        rie_conf_cleanup(meta, ctx);
         return RIE_ERROR;
     }
 
-    root = xmlDocGetRootElement(doc);
-    if (root == NULL) {
-        rc = RIE_ERROR;
-        goto cleanup;
-    }
-
-    if (strcmp((char *) root->name, "rieman-conf") == 0) {
-        rc = rie_conf_get_value(doc, (xmlChar*) "/rieman-conf/@version", &vers);
-        is_conf = 1;
-
-    } else if (strcmp((char *) root->name, "rieman-skin") == 0) {
-        rc = rie_conf_get_value(doc, (xmlChar*) "/rieman-skin/@version", &vers);
-
-    } else {
-        rie_log_error(0, "unknown root element \"%s\"", root->name);
-        rc = RIE_ERROR;
-        goto cleanup;
-    }
-
-    if (rc == RIE_ERROR) {
-        rc = RIE_ERROR;
-        goto cleanup;
-    }
-
-    if (rc != RIE_NOTFOUND) {
-
-        /* if config or skin specifies version, it will be validated */
-
-        if (rie_conf_to_dbl((char *) vers, &cv) != RIE_OK) {
-            xmlFree(vers);
-            rc = RIE_ERROR;
-            goto cleanup;
-        }
-
-        vact = cv.dbl * 10;
-
-        if (vact < meta->version_min || vact > meta->version_max) {
-#if !defined(RIE_TESTS)
-            rie_log_error(0, "unsupported version: \"%s\", "
-                          "supported are: %.1f..%.1f", vers,
-                          (float) meta->version_min / 10,
-                          (float) meta->version_max / 10);
-            xmlFree(vers);
-            rc = RIE_ERROR;
-            goto cleanup;
-#endif
-        }
-
-        if (is_conf) {
-
-            if (rie_locate_config_schema(&schema_file, vers) != RIE_OK) {
-                rie_log_error0(0, "No config schema found, exiting");
-                xmlFree(vers);
-                rc = RIE_ERROR;
-                goto cleanup;
-            }
-
-        } else {
-
-            if (rie_locate_skin_schema(&schema_file, vers) != RIE_OK) {
-                rie_log_error0(0, "skin schema not found");
-                xmlFree(vers);
-                rc = RIE_ERROR;
-                goto cleanup;
-            }
-        }
-
-        xmlFree(vers);
-
-        rie_log("validating configuration using schema '%s'", schema_file);
-
-        schema_parser = xmlSchemaNewParserCtxt(schema_file);
-        if (schema_parser == NULL) {
-            rie_conf_log_error(NULL, "failed to create schema parser");
-            rc = RIE_ERROR;
-            goto cleanup;
-        }
-
-        schema = xmlSchemaParse(schema_parser);
-        if (schema == NULL) {
-            rie_conf_log_error(NULL, "failed to parse schema");
-            rc = RIE_ERROR;
-            goto cleanup;
-        }
-
-        validator = xmlSchemaNewValidCtxt(schema);
-        if (validator == NULL) {
-            rie_conf_log_error(NULL, "failed to create validator context");
-            rc = RIE_ERROR;
-            goto cleanup;
-        }
-
-        rc = xmlSchemaValidateDoc(validator, doc);
-        if (rc != 0) {
-            rie_conf_log_error(NULL, "configuration is not valid");
-            rc = RIE_ERROR;
-            goto cleanup;
-        }
-    }
-
-    xmlSetGenericErrorFunc(doc, rie_conf_quiet_stub);
-
-    rc = rie_conf_iterate(doc, meta->spec, NULL, ctx, rie_conf_process_key);
-
-    if (rc != RIE_OK) {
-        rie_conf_cleanup(meta, ctx);
-    }
-
-cleanup:
-
-    xmlSetGenericErrorFunc(NULL, NULL);
-
-    xmlFreeDoc(doc);
-    xmlCleanupParser();
-
-    if (schema_parser) {
-        xmlSchemaFreeParserCtxt(schema_parser);
-    }
-
-    if (schema) {
-        xmlSchemaFree(schema);
-    }
-
-    if (validator) {
-        xmlSchemaFreeValidCtxt(validator);
-    }
-
-    return rc;
+    return rie_conf_init_defaults(meta->spec, ctx);
 }
 
 
 void
 rie_conf_cleanup(rie_conf_meta_t *meta, void *ctx)
 {
-    (void) rie_conf_iterate(NULL, meta->spec, NULL, ctx, rie_conf_free_key);
+    char  **conf_key, *mem;
+    void   *res;
+    rie_conf_item_t  *spec;
+
+    for (spec = meta->spec; spec->name; spec++) {
+        if (!spec->initialized) {
+            continue;
+        }
+
+        if (spec->type == RIE_CTYPE_STR && spec->convert == NULL) {
+            /* converters free source string by themselves */
+
+            res = (char *) ctx + spec->offset;
+
+            conf_key = (char **) res;
+            mem = *conf_key;
+
+            if (mem) {
+                free(mem);
+                *conf_key = NULL;
+            }
+        }
+
+        spec->initialized = 0;
+    }
 }

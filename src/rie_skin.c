@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017-2019 Vladimir Homutov
+ * Copyright (C) 2017-2020 Vladimir Homutov
  */
 
 /*
@@ -52,210 +52,128 @@ static rie_conf_map_t rie_texture_types[] = {
     { NULL, 0 }
 };
 
-static rie_conf_item_t rie_color_conf[] = {
 
-   { "/@hex", RIE_CTYPE_STR, "0",
-     0, rie_skin_hex_to_rgb, { NULL } },
-
-    { NULL, 0, NULL, 0, NULL, { NULL } }
-};
-
-static rie_conf_ref_t rie_color_ref[] = {
-    { "/rieman-skin/colors/colordef[@name='%s']", rie_color_conf }
-};
-
-
-#define rie_border_entry(dflt_clr)                                  \
-    {                                                               \
-        { "/@width", RIE_CTYPE_UINT32, "0",                         \
-          offsetof(rie_border_t, w),  NULL, { NULL } },             \
-                                                                    \
-        { "/@color", RIE_CTYPE_REF, dflt_clr,                       \
-          offsetof(rie_border_t, color),                            \
-          NULL, { rie_color_ref } },                                \
-                                                                    \
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",                          \
-          offsetof(rie_border_t, alpha),  NULL, { NULL } },         \
-                                                                    \
-        { "/@src", RIE_CTYPE_STR, "",                               \
-          offsetof(rie_border_t, tile_src),  NULL, { NULL } },      \
-                                                                    \
-        { "/@type", RIE_CTYPE_STR, "color",                         \
-          offsetof(rie_border_t, type),                             \
-          rie_conf_set_variants, { rie_texture_types } },           \
-                                                                    \
-        { NULL, 0, NULL, 0, NULL, { NULL } }                        \
-    }
-
-static rie_conf_item_t rie_tx_border_conf[][6] = {
-        rie_border_entry("black"), /* RIE_BORDER_PAGER */
-        rie_border_entry("black"), /* RIE_BORDER_DESKTOP_ACTIVE */
-        rie_border_entry("black"), /* RIE_BORDER_WINDOW */
-        rie_border_entry("black"), /* RIE_BORDER_WINDOW_FOCUSED */
-        rie_border_entry("white"), /* RIE_BORDER_WINDOW_ATTENTION */
-        rie_border_entry("white"), /* RIE_BORDER_VIEWPORT */
-        rie_border_entry("white"), /* RIE_BORDER_VIEWPORT_ACTIVE */
-};
+#define rie_border_entry(prefix, index, dflt_clr)               \
+    { prefix".width", RIE_CTYPE_UINT32, "0",                    \
+      offsetof(struct rie_skin_s, borders[index])               \
+      + offsetof(rie_border_t, w),  NULL, { NULL } },           \
+                                                                \
+    { prefix".color", RIE_CTYPE_STR, dflt_clr,                  \
+      offsetof(struct rie_skin_s, borders[index])               \
+      + offsetof(rie_border_t, color),                          \
+      rie_skin_hex_to_rgb, { NULL } },                          \
+                                                                \
+    { prefix".alpha", RIE_CTYPE_DBL, "1.0",                     \
+      offsetof(struct rie_skin_s, borders[index])               \
+      + offsetof(rie_border_t, alpha),  NULL, { NULL } },       \
+                                                                \
+    { prefix".src", RIE_CTYPE_STR, "",                          \
+      offsetof(struct rie_skin_s, borders[index])               \
+      + offsetof(rie_border_t, tile_src),  NULL, { NULL } },    \
+                                                                \
+    { prefix".type", RIE_CTYPE_STR, "color",                    \
+      offsetof(struct rie_skin_s, borders[index])               \
+      + offsetof(rie_border_t, type),                           \
+      rie_conf_set_variants, { rie_texture_types } }            \
 
 
-#define rie_tx_entry(dflt_clr)                            \
-    {                                                     \
-        { "/@type", RIE_CTYPE_STR, "color",               \
-          offsetof(rie_texture_t, type),                  \
-          rie_conf_set_variants, { rie_texture_types } }, \
-                                                          \
-        { "/@color", RIE_CTYPE_REF, dflt_clr,             \
-          offsetof(rie_texture_t, color),                 \
-          NULL, { rie_color_ref } },                      \
-                                                          \
-        { "/@src", RIE_CTYPE_STR, "",                     \
-          offsetof(rie_texture_t, image),                 \
-          NULL, { NULL } },                               \
-                                                          \
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",                \
-          offsetof(rie_texture_t, alpha),                 \
-          NULL, { NULL } },                               \
-                                                          \
-        { NULL, 0, NULL, 0, NULL, { NULL } }              \
-    }
+#define rie_tx_entry(prefix, index, dflt_clr)                   \
+    { prefix".type", RIE_CTYPE_STR, "color",                    \
+      offsetof(struct rie_skin_s, textures[index])              \
+      + offsetof(rie_texture_t, type),                          \
+      rie_conf_set_variants, { rie_texture_types } },           \
+                                                                \
+    { prefix".color", RIE_CTYPE_STR, dflt_clr,                  \
+      offsetof(struct rie_skin_s, textures[index])              \
+      + offsetof(rie_texture_t, color),                         \
+      rie_skin_hex_to_rgb, { NULL } },                          \
+                                                                \
+    { prefix".src", RIE_CTYPE_STR, "",                          \
+      offsetof(struct rie_skin_s, textures[index])              \
+      + offsetof(rie_texture_t, image),                         \
+      NULL, { NULL } },                                         \
+                                                                \
+    { prefix".alpha", RIE_CTYPE_DBL, "1.0",                     \
+      offsetof(struct rie_skin_s, textures[index])              \
+      + offsetof(rie_texture_t, alpha),                         \
+      NULL, { NULL } }                                          \
 
-
-static rie_conf_item_t rie_textures_conf[][5] = {
-    rie_tx_entry("black"), /* RIE_TX_BACKGROUND */
-    rie_tx_entry("black"), /* RIE_TX_DESKTOP */
-    rie_tx_entry("black"), /* RIE_TX_CURRENT_DESKTOP */
-    rie_tx_entry("black"), /* RIE_TX_DESKTOP_NAME_BG */
-    rie_tx_entry("black"), /* RIE_TX_WINDOW */
-    rie_tx_entry("black"), /* RIE_TX_WINDOW_FOCUSED */
-    rie_tx_entry("white"), /* RIE_TX_WINDOW_ATTENTION */
-    rie_tx_entry("white"), /* RIE_TX_MISSING_ICON */
-    rie_tx_entry("white"), /* RIE_TX_VIEWPORT */
-    rie_tx_entry("white"), /* RIE_TX_VIEWPORT_ACTIVE */
-};
-
-
-#define rie_font_entry(fname, fsize, fclr)                \
-    {                                                     \
-        { "/@size", RIE_CTYPE_UINT32, fsize,              \
-          offsetof(rie_fc_t, points), NULL, { NULL } },   \
-                                                          \
-        { "/@face", RIE_CTYPE_STR, fname,                 \
-          offsetof(rie_fc_t, face), NULL, { NULL } },     \
-                                                          \
-        { "/@color", RIE_CTYPE_REF, fclr,                 \
-          offsetof(rie_fc_t, color),                      \
-          NULL, { rie_color_ref } },                      \
-                                                          \
-        { "/@alpha", RIE_CTYPE_DBL, "1.0",                \
-          offsetof(rie_fc_t, alpha), NULL, { NULL } },    \
-                                                          \
-        { NULL, 0, NULL, 0, NULL, { NULL } }              \
-    }
-
-static rie_conf_item_t rie_skin_font_conf[][5] = {
-    rie_font_entry("Droid Sans", "10", "black"), /* RIE_FONT_DESKTOP_NAME */
-    rie_font_entry("Droid Sans", "10", "black"), /* RIE_FONT_WINDOW_NAME */
-    rie_font_entry("Clockopia",  "12", "black"), /* RIE_FONT_DESKTOP_NUMBER */
-    rie_font_entry("Droid Sans", "12", "black"), /* RIE_FONT_GUI */
-};
+#define rie_font_entry(prefix, index, fname, fsize, fclr)       \
+    { prefix".size", RIE_CTYPE_UINT32, fsize,                   \
+      offsetof(struct rie_skin_s, fonts[index])                 \
+      + offsetof(rie_fc_t, points), NULL, { NULL } },           \
+                                                                \
+    { prefix".face", RIE_CTYPE_STR, fname,                      \
+      offsetof(struct rie_skin_s, fonts[index])                 \
+      + offsetof(rie_fc_t, face), NULL, { NULL } },             \
+                                                                \
+    { prefix".color", RIE_CTYPE_STR, fclr,                      \
+      offsetof(struct rie_skin_s, fonts[index])                 \
+      + offsetof(rie_fc_t, color),                              \
+      rie_skin_hex_to_rgb, { NULL } },                          \
+                                                                \
+    { prefix".alpha", RIE_CTYPE_DBL, "1.0",                     \
+      offsetof(struct rie_skin_s, fonts[index])                 \
+      + offsetof(rie_fc_t, alpha), NULL, { NULL } }             \
 
 
 static rie_conf_item_t rie_skin_conf[] = {
 
     /* Backgrounds */
 
-    { "/rieman-skin/backgrounds/pager", RIE_CTYPE_CHAIN, NULL,
-      offsetof(struct rie_skin_s, textures[RIE_TX_BACKGROUND]),
-      NULL, { rie_textures_conf[RIE_TX_BACKGROUND] } },
-
-    { "/rieman-skin/backgrounds/viewport", RIE_CTYPE_CHAIN, NULL,
-      offsetof(struct rie_skin_s, textures[RIE_TX_VIEWPORT]),
-      NULL, { rie_textures_conf[RIE_TX_VIEWPORT] } },
-
-    { "/rieman-skin/backgrounds/viewport-active", RIE_CTYPE_CHAIN, NULL,
-      offsetof(struct rie_skin_s, textures[RIE_TX_VIEWPORT_ACTIVE]),
-      NULL, { rie_textures_conf[RIE_TX_VIEWPORT_ACTIVE] } },
-
-    { "/rieman-skin/backgrounds/desktop",
-      RIE_CTYPE_CHAIN, NULL,
-      offsetof(struct rie_skin_s, textures[RIE_TX_DESKTOP]),
-      NULL, { rie_textures_conf[RIE_TX_DESKTOP] } },
-
-    { "/rieman-skin/backgrounds/desktop-active",
-      RIE_CTYPE_CHAIN, NULL,
-      offsetof(struct rie_skin_s, textures[RIE_TX_CURRENT_DESKTOP]),
-      NULL, { rie_textures_conf[RIE_TX_CURRENT_DESKTOP] } },
-
-    { "/rieman-skin/backgrounds/desktop-pad", RIE_CTYPE_CHAIN, NULL,
-      offsetof(struct rie_skin_s, textures[RIE_TX_DESKTOP_NAME_BG]),
-      NULL, { rie_textures_conf[RIE_TX_DESKTOP_NAME_BG] } },
-
-    { "/rieman-skin/backgrounds/window",
-      RIE_CTYPE_CHAIN, NULL,
-      offsetof(struct rie_skin_s, textures[RIE_TX_WINDOW]),
-      NULL, { rie_textures_conf[RIE_TX_WINDOW] } },
-
-    { "/rieman-skin/backgrounds/window-active",
-      RIE_CTYPE_CHAIN, NULL,
-      offsetof(struct rie_skin_s, textures[RIE_TX_WINDOW_FOCUSED]),
-      NULL, { rie_textures_conf[RIE_TX_WINDOW_FOCUSED] } },
-
-    { "/rieman-skin/backgrounds/window-attention",
-      RIE_CTYPE_CHAIN, NULL,
-      offsetof(struct rie_skin_s, textures[RIE_TX_WINDOW_ATTENTION]),
-      NULL, { rie_textures_conf[RIE_TX_WINDOW_ATTENTION] } },
+    rie_tx_entry("backgrounds.pager", RIE_TX_BACKGROUND,
+                 "#000000"),
+    rie_tx_entry("backgrounds.desktop", RIE_TX_DESKTOP,
+                 "#000000"),
+    rie_tx_entry("backgrounds.desktop-active", RIE_TX_CURRENT_DESKTOP,
+                 "#000000"),
+    rie_tx_entry("backgrounds.desktop-pad", RIE_TX_DESKTOP_NAME_BG,
+                 "#000000"),
+    rie_tx_entry("backgrounds.window", RIE_TX_WINDOW,
+                 "#000000"),
+    rie_tx_entry("backgrounds.window-active", RIE_TX_WINDOW_FOCUSED,
+                 "#000000"),
+    rie_tx_entry("backgrounds.window-attention", RIE_TX_WINDOW_ATTENTION,
+                 "#ffffff"),
+    rie_tx_entry("backgrounds.viewport", RIE_TX_VIEWPORT,
+                 "#ffffff"),
+    rie_tx_entry("backgrounds.viewport-active", RIE_TX_VIEWPORT_ACTIVE,
+                 "#ffffff"),
 
     /* Borders */
 
-    { "/rieman-skin/borders/pager", RIE_CTYPE_CHAIN, NULL,
-      offsetof(struct rie_skin_s, borders[RIE_BORDER_PAGER]),
-      NULL, { rie_tx_border_conf[RIE_BORDER_PAGER] } },
-
-    { "/rieman-skin/borders/desktop-active", RIE_CTYPE_CHAIN, NULL,
-      offsetof(struct rie_skin_s, borders[RIE_BORDER_DESKTOP_ACTIVE]),
-      NULL, { rie_tx_border_conf[RIE_BORDER_DESKTOP_ACTIVE] } },
-
-    { "/rieman-skin/borders/viewport", RIE_CTYPE_CHAIN, NULL,
-      offsetof(struct rie_skin_s, borders[RIE_BORDER_VIEWPORT]),
-      NULL, { rie_tx_border_conf[RIE_BORDER_VIEWPORT] } },
-
-    { "/rieman-skin/borders/viewport-active", RIE_CTYPE_CHAIN, NULL,
-      offsetof(struct rie_skin_s, borders[RIE_BORDER_VIEWPORT_ACTIVE]),
-      NULL, { rie_tx_border_conf[RIE_BORDER_VIEWPORT_ACTIVE] } },
-
-    { "/rieman-skin/borders/window",
-      RIE_CTYPE_CHAIN, NULL,
-      offsetof(struct rie_skin_s, borders[RIE_BORDER_WINDOW]),
-      NULL, { rie_tx_border_conf[RIE_BORDER_WINDOW] } },
-
-    { "/rieman-skin/borders/window-active", RIE_CTYPE_CHAIN, NULL,
-      offsetof(struct rie_skin_s, borders[RIE_BORDER_WINDOW_FOCUSED]),
-      NULL, { rie_tx_border_conf[RIE_BORDER_WINDOW_FOCUSED] } },
-
-    { "/rieman-skin/borders/window-attention", RIE_CTYPE_CHAIN, NULL,
-      offsetof(struct rie_skin_s, borders[RIE_BORDER_WINDOW_ATTENTION]),
-      NULL, { rie_tx_border_conf[RIE_BORDER_WINDOW_ATTENTION] } },
+    rie_border_entry("borders.pager", RIE_BORDER_PAGER,
+                     "#000000"),
+    rie_border_entry("borders.desktop-active", RIE_BORDER_DESKTOP_ACTIVE,
+                     "#000000"),
+    rie_border_entry("borders.window", RIE_BORDER_WINDOW,
+                     "#000000"),
+    rie_border_entry("borders.window-active", RIE_BORDER_WINDOW_FOCUSED,
+                     "#000000"),
+    rie_border_entry("borders.window-attention", RIE_BORDER_WINDOW_ATTENTION,
+                     "#ffffff"),
+    rie_border_entry("borders.viewport", RIE_BORDER_VIEWPORT,
+                     "#ffffff"),
+    rie_border_entry("borders.viewport-active", RIE_BORDER_VIEWPORT_ACTIVE,
+                     "#ffffff"),
 
     /* Fonts */
 
-    { "/rieman-skin/fonts/desktop-name", RIE_CTYPE_CHAIN, "small",
-      offsetof(struct rie_skin_s, fonts[RIE_FONT_DESKTOP_NAME]),
-      NULL, { rie_skin_font_conf[RIE_FONT_DESKTOP_NAME] }},
+    rie_font_entry("fonts.desktop-name", RIE_FONT_DESKTOP_NAME,
+                   "Droid Sans", "10", "#000000"),
 
-    { "/rieman-skin/fonts/window-name", RIE_CTYPE_CHAIN, "small",
-      offsetof(struct rie_skin_s, fonts[RIE_FONT_WINDOW_NAME]),
-      NULL, { rie_skin_font_conf[RIE_FONT_WINDOW_NAME] }},
+    rie_font_entry("fonts.window-name", RIE_FONT_WINDOW_NAME,
+                    "Droid Sans", "10", "#000000"),
 
-    { "/rieman-skin/fonts/desktop-number", RIE_CTYPE_CHAIN, "small",
-      offsetof(struct rie_skin_s, fonts[RIE_FONT_DESKTOP_NUMBER]),
-      NULL, { rie_skin_font_conf[RIE_FONT_DESKTOP_NUMBER] } },
+    rie_font_entry("fonts.desktop-number", RIE_FONT_DESKTOP_NUMBER,
+                    "Clockopia",  "12", "#000000"),
 
     /* Icons */
 
-    { "/rieman-skin/icons/window/@alpha", RIE_CTYPE_DBL, "1.0",
+    { "icons.window.alpha", RIE_CTYPE_DBL, "1.0",
       offsetof(struct rie_skin_s, icon_alpha), NULL, { NULL } },
 
-    { "/rieman-skin/icons/window/@fallback", RIE_CTYPE_STR, "missing_icon.png",
+    { "icons.window.fallback", RIE_CTYPE_STR, "missing_icon.png",
       offsetof(struct rie_skin_s, textures[RIE_TX_MISSING_ICON].image),
       NULL, { NULL } },
 
@@ -473,8 +391,8 @@ rie_skin_new(char *name, rie_gfx_t *gc)
 
     memset(skin, 0, sizeof(struct rie_skin_s));
 
-    skin->meta.version_min = 10;
-    skin->meta.version_max = 10;
+    skin->meta.version_min = 11;
+    skin->meta.version_max = 11;
     skin->meta.spec = rie_skin_conf;
 
     rie_log("using skin configuration file '%s'", conf_file);

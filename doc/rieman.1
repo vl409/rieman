@@ -1,4 +1,4 @@
-.TH rieman 1 "2017-12-26" "GNU/Linux" "User's Manual"
+.TH rieman 1 "2020-12-14" "GNU/Linux" "User's Manual"
 
 .SH "NAME"
 rieman \- The X11 desktop pager
@@ -54,6 +54,10 @@ Pseudo-transparency support
 Theme (aka skin) support. Any element may be customized.
 .IP \(bu 4
 Configuration reload
+.IP \(bu 4
+Simple tiling for desktop windows (1.1)
+.IP \(bu 4
+Control commands via configuration socket (1.2)
 
 
 .SH "OPTIONS"
@@ -106,136 +110,136 @@ environment variable.  To run rieman on the second screen run:
 .SH "FILES"
 
 .PP
-The main configuration files is named rieman.xml.
+The main configuration files is named rieman.conf.
 A skin is a directory containing image files and a
-rieman_skin.xml configuration file. All paths inside
+rieman_skin.conf configuration file. All paths inside
 skin configuration file are relative to its directory.
 
 Files are looked up until found in the following locations:
 
 .TP
-.I ./conf/rieman.xml
+.I ./conf/rieman.conf
 .TP
-.I ./skins/<name>/rieman_skin.xml
+.I ./skins/<name>/rieman_skin.conf
 
 current directory configuration (i.e. executing from the build directory)
 
 .TP
 .I
-$XDG_CONFIG_HOME/rieman/rieman.xml
+$XDG_CONFIG_HOME/rieman/rieman.conf
 .TP
-.I $XDG_DATA_HOME/rieman/skins/<name>/rieman_skin.xml
+.I $XDG_DATA_HOME/rieman/skins/<name>/rieman_skin.conf
 
 location as defined by freedesktop.org
 
 .TP
-.I ~/.config/rieman.xml
+.I ~/.config/rieman.conf
 .TP
-.I ~/.local/share/rieman/skins/<name>/rieman_skin.xml
+.I ~/.local/share/rieman/skins/<name>/rieman_skin.conf
 
 home directory
 
 .TP
-.I /usr/local/share/rieman/rieman.xml
+.I /usr/local/share/rieman/rieman.conf
 .TP
-.I /usr/local/share/rieman/skins/<name>/rieman_skin.xml
+.I /usr/local/share/rieman/skins/<name>/rieman_skin.conf
 
 system-wide, /usr/local/share/rieman is the default datadir
 
 .SH "CONFIGURATION"
 
-The configuration is stored in XML, inside the root tag, named
-.I rieman-conf
-for the main configuration and
-.I rieman-skin
-for the skin configuration. Both have the
-.I version
-attribute, specifying used version of configuration schema.
-rieman will check this version on start and refuse to load unsupported one.
+Configuration file format:
 
-The version attribute is optional. If not present, rieman will not try
-to validate configuration against known schema and will just try to load
-known keys from document.
+.IP \(bu 4
+everything from '#' to end of line is a comment and ignored
 
-Existing schemas: 1, 1.1 and 1.2
-Currently the only difference is new options added to configuration file.
+.IP \(bu 4
+each line contains key and value separated by whitespace
 
-Below is the description of available configuration keys. Root tag is omitted
-for brevity, nesting is specified using slash, attributes are specified after
-the key.
+.IP \(bu 4
+value is not escaped and quoting is not required. leading and trailing
+spaces in the value are ignored. See conf/rieman.conf for example.
+
+Configuration keys are:
 
 .TP
-.I /geometry width=<n> height=<0 | n>
+.I geometry.width, geometry.height <0 | n>
 
 Defines size of a single on-screen desktop cell in pixels. Zero height leads
 to autocalculated setting based on screen aspect ratio.
 
 .TP
-.I /layout wrap=<n> corner=<c> orientation=<horizontal | vertical>
+.I layout.wrap <n>
+   layout.corner <c>
+   layout.orientation <horizontal | vertical>
 
 The wrap parameter defines length of a row or column (depending on orientation).
 The corner is one of "topleft", "topright", "bottomleft" or "bottomright" and
 defines how desktops are arranged. See _NET_DESKTOP_LAYOUT for details.
 
 .TP
-.I /appearance/skin name=<name>
+.I appearance.skin <name>
 
 Sets the skin name to use.
 
 .TP
-.I /appearance/desktop_text enable=<true | false> content=<name|number>
+.I appearance.desktop_text <true | false>
+   appearance.desktop_text.content <name|number>
 
 If set, desktop number or name is displayed in the center of a desktop cell
 
 .TP
-.I /appearance/desktop_pad enable=<true | false> position=<above | below>
+.I appearance.desktop_pad <true | false>
+   appearance.desktop_pad.position <above | below>
 
 If set, little pad is drawn above or below desktop cell, which is used
 to display desktop name (and for other purposes as well, like windows
 names and icons for hidden windows)
 
 .TP
-.I /appearance/window_icon enable=<true | false>
+.I appearance.window_icon <true | false>
 
 If set, window icon is displayed additionally in a window rectangle
 
 .TP
-.I /appearance/viewports enable=<true | false>
+.I appearance.viewports  <true | false>
 
 If set, viewports are displayed as a grid inside a desktop cell
 
 .TP
-.I /appearance/minitray enable=<true | false>
+.I appearance.minitray  <true | false>
 
 If set, icons of a hidden windows are displayed in area, where desktop
 name is shown; click on such an icon restores the window
 
 .TP
-.I /window/withdrawn enable=<true | false>
+.I window.withdrawn  <true | false>
     starts the pager in withdrawn state to put into dock/slit
 
 .TP
-.I /window/dock enable=<true | false>
+.I window.dock  <true | false>
     sets window type to _NET_WM_WINDOW_TYPE_DOCK.
     Useful for WMs that expect it.
 
 .TP
-.I /window/skip_taskbar enable=<true | false>
+.I window.skip_taskbar  <true | false>
 
     If set, pager window is not shown in the taskbar
 
 .TP
-.I /window/skip_pager enable=<true | false>
+.I window.skip_pager  <true | false>
 
     If set, pager window is not shown in pagers
 
 .TP
-.I /window/sticky enable=<true | false>
+.I window.sticky  <true | false>
 
     If set, pager window appears on all desktops
 
 .TP
-.I /window/position value="topright | topleft | bottomright | bottomleft" dx=n dy=n
+.I window.position <topright | topleft | bottomright | bottomleft>
+   window.dx <n>
+   window.dy <n>
 
     Defines startup position on the screen. Note that in withdrawn mode
     window may be reparented and the setting will define position inside
@@ -245,27 +249,46 @@ name is shown; click on such an icon restores the window
     corner. By default, offsets are zero.
 
 .TP
-.I /window/layer value="above | below | normal"
+.I window.layer  <above | below | normal>
 
     Defines window layer
 
 .TP
-.I /window/struts enable=<true | false> left left_start_y left_end_y
-.I                                      right right_start_y right_end_y
-.I                                      top top_start_x top_end_x bottom
-.I                                      bottom_start_x bottom_end
+.I window.struts  <true | false>
+
+.I window.struts.left <pixels>
+
+.I window.struts.left_start_y <pixels>
+
+.I window.struts.left_end_y <pixels>
+
+.I window.struts.right right_start_y <pixels>
+
+.I window.struts.right_end_y <pixels>
+
+.I window.struts.top top_start_x <pixels>
+
+.I window.struts.top_end_x <pixels>
+
+.I window.struts.bottom <pixels>
+
+.I window.struts.bottom_start_x <pixels>
+
+.I window.struts.bottom_end <pixels>
 
    If enabled, defines values for_NET_WM_STRUT/_NET_WM_STRUT_PARTIAL which
    reserve place on screen borders for the window.
 
 .TP
-.I /actions/change_desktop enable=<true | false> mouse_button=<left | right | middle>
+.I actions.change_desktop  <true | false>
+   actions.change_desktop.mouse_button <left | right | middle>
 
     If set, mouse events are processed, allowing to switch desktops and focus
     windows. The mouse_button arguments selects the desired button.
 
 .TP
-.I /actions/tile_windows enable=<true | false> mouse_button=<left | right | middle>
+.I actions.tile_windows <true | false>
+   actions.tile_windows.mouse_button <left | right | middle>
 
     If set, mouse events are processed, allowing to tile windows on clicked
     desktop, using different tiling methods in a loop. Currently supported
@@ -273,7 +296,7 @@ name is shown; click on such an icon restores the window
     The mouse_button arguments selects the desired button.
 
 .TP
-.I /control socket=</path/to/socket>
+.I control socket </path/to/socket>
 
    If set, rieman will listen for commands on UNIX DGRAM socket at specified
    path.  To send command, run the rieman executable with -m option and provide
@@ -299,63 +322,60 @@ tile_current_desktop - tile windows on current desktop, one layout per command
 
 The skin configuration defines following elements:
 .IP \(bu 4
-/colors - list of named color definitions ('colordef')
+fonts - font specification for pager elements
 .IP \(bu 4
-/fonts - font specification for pager elements
+backgrounds - textures specifications for pager elements
 .IP \(bu 4
-/backgrounds - textures specifications for pager elements
+borders - borders specification for pager elements
 .IP \(bu 4
-/borders - borders specification for pager elements
-.IP \(bu 4
-/icons - icons settings
+icons - icons settings
 
 .TP
-.I colordef name=<name> hex=<[#][0x]base16-value>
-
-Defines named color for further use in configuration.
+The font attributes are:
 .TP
-The elements under /fonts have the following attributes:
-.TP
-.I face=<freetype_def> size=<n> color=<colordef>
+.I fonts.<item>.face <freetype_def>
+   fonts.<item>.size <n>
+   fonts.<item>.color <[0x]base16-value>
 
 .I face
 is passed to fontconfig, check corresponding docs. Example "Droid Sans:10:Bold".
 .I size
 is the actual size in pixels that will be used to show it on screen.
 .I color
-is one of previously defined
-.I colordef
+is a hex number.
 
-Following elements may appear in /fonts: desktop-name, window-name, desktop-number
 .TP
-The elements under /backgrounds have the following attributes:
+The backgrounds attributes are:
 .TP
-.I type=<image | color> alpha=<0..1>  src=<path | :root:> | color=<colordef>
+.I backgrounds.<item>.type <image | color>
+   backgrounds.<item>.alpha <0..1>
+   backgrounds.<item>.src <path | :root:>
+   backgrounds.<item>.color <[0x]base16-value>
 
 For
 .I image,
 src attribute must be specified with a path to PNG image, or a special value
 .I ":root:"
 which will use existing root background. If type is
-.I color
-is specified, previously defined
-.I colordef
-(see below) must be supplied in the
-.I color
-attribute.
+.I color, use specified color
+
 
 The
 .I alpha
 attribute defines transparency of a texture.
 
-Following elements may appear under /backgrounds: pager, desktop, desktop-pad,
+Following items are configurable in backgrounds: pager, desktop, desktop-pad,
 desktop-active, viewport, viewport-active, window, window-active,
 window-attention.
 
 .TP
-The elements under /borders have the following attributes:
+The borders attributes are:
 .TP
-.I width=<n> type=<image|color> alpha=<0..1> tiles=<path> | color=<colordef>
+.I borders.<item>.width <n>
+   borders.<item>.type <image|color>
+   borders.<item>.alpha <0..1>
+   borders.<item> tiles <path> |
+   borders.<item>.color <[0x]base16-value>
 
 Defines border around some element. If
 .I width
@@ -371,7 +391,7 @@ The
 parameter is identical to those of
 .I background
 
-Following elements may appear under /backgrounds: pager,
+Following items are configurable in borders: pager,
 desktop-active, viewport, viewport-active, window, window-active,
 window-attention.
 
@@ -408,10 +428,22 @@ example some messaging app with arrived message pending, or newly created
 window.
 
 .TP
-.I /icons/window alpha=<0..1> fallback=<path>
+.I icons.window.alpha <0..1>
+   icons.window.fallback <path>
 
 Defines alpha level for window icons and image to use for windows that have
 no icons
+
+.SH CHANGES
+
+In version 1.2 all XML configuration was replaced with "conf" simple plaintext
+format, both for configuration and skins.
+Old files (configuration and skins) can be converted to new format using
+script/xml2conf.sh script (xsltproc utility is required)
+
+Version 1.1 of skins removed /colors section with list of colordef's that
+could be referenced from skin. Instead, color is specified directly,
+using "color" attribute with hexadecimal value.
 
 .SH "AUTHORS"
 

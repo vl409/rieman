@@ -86,135 +86,138 @@ static rie_conf_map_t rie_conf_labels[] = {
 
 static rie_conf_item_t rie_conf[] = {
 
-    { "/rieman-conf/geometry/@width", RIE_CTYPE_UINT32, "100",
+    { "geometry.width", RIE_CTYPE_UINT32, "100",
       offsetof(rie_settings_t, desktop.w), NULL, { NULL } },
 
-    { "/rieman-conf/geometry/@height", RIE_CTYPE_UINT32, "0",
+    { "geometry.height", RIE_CTYPE_UINT32, "0",
       offsetof(rie_settings_t, desktop.h), NULL, { NULL } },
 
-    { "/rieman-conf/layout/@wrap", RIE_CTYPE_UINT32, "0",
+    { "layout.wrap", RIE_CTYPE_UINT32, "0",
       offsetof(rie_settings_t, desktop.wrap), NULL, { NULL } },
 
-    { "/rieman-conf/layout/@corner", RIE_CTYPE_STR, "topleft",
+    { "layout.corner", RIE_CTYPE_STR, "topleft",
       offsetof(rie_settings_t, desktop.corner),
       rie_conf_set_variants, { &rie_conf_corners } },
 
-    { "/rieman-conf/layout/@orientation", RIE_CTYPE_STR, "horizontal",
+    { "layout.orientation", RIE_CTYPE_STR, "horizontal",
       offsetof(rie_settings_t, desktop.orientation),
       rie_conf_set_variants, { &rie_conf_orientations } },
 
 
-    { "/rieman-conf/appearance/skin/@name", RIE_CTYPE_STR,  "default",
+    { "appearance.skin", RIE_CTYPE_STR,  "default",
       offsetof(rie_settings_t, skin), NULL, { NULL } },
 
-    { "/rieman-conf/appearance/desktop_pad/@enable", RIE_CTYPE_BOOL, "true",
+    { "appearance.desktop_pad", RIE_CTYPE_BOOL, "true",
       offsetof(rie_settings_t, show_pad), NULL, { NULL } },
 
-   { "/rieman-conf/appearance/desktop_pad/@position", RIE_CTYPE_STR, "below",
+   { "appearance.desktop_pad.position", RIE_CTYPE_STR, "below",
       offsetof(rie_settings_t, pad_position),
       rie_conf_set_variants, { &rie_conf_pad_positions } },
 
-   { "/rieman-conf/appearance/desktop_pad/@margin", RIE_CTYPE_UINT32, "2",
+   { "appearance.desktop_pad.margin", RIE_CTYPE_UINT32, "2",
       offsetof(rie_settings_t, pad_margin), NULL, { NULL } },
 
-    { "/rieman-conf/appearance/desktop_text/@enable", RIE_CTYPE_BOOL, "true",
+    { "appearance.desktop_text", RIE_CTYPE_BOOL, "true",
       offsetof(rie_settings_t, show_text), NULL, { NULL } },
 
-    { "/rieman-conf/appearance/desktop_text/@content", RIE_CTYPE_STR, "number",
+    { "appearance.desktop_text.content", RIE_CTYPE_STR, "number",
       offsetof(rie_settings_t, desktop.content),
       rie_conf_set_variants, { &rie_conf_labels } },
 
-    { "/rieman-conf/appearance/window_icon/@enable", RIE_CTYPE_BOOL, "true",
+    { "appearance.window_icon", RIE_CTYPE_BOOL, "true",
       offsetof(rie_settings_t, show_window_icons), NULL, { NULL } },
 
-    { "/rieman-conf/appearance/viewports/@enable", RIE_CTYPE_BOOL, "true",
+    { "appearance.viewports", RIE_CTYPE_BOOL, "true",
       offsetof(rie_settings_t, show_viewports), NULL, { NULL } },
 
-    { "/rieman-conf/appearance/minitray/@enable", RIE_CTYPE_BOOL, "true",
+    { "appearance.minitray", RIE_CTYPE_BOOL, "true",
       offsetof(rie_settings_t, show_minitray), NULL, { NULL } },
 
-    { "/rieman-conf/window/withdrawn/@enable", RIE_CTYPE_BOOL, "false",
+    { "window.withdrawn", RIE_CTYPE_BOOL, "false",
       offsetof(rie_settings_t, withdrawn), NULL, { NULL } },
 
-    { "/rieman-conf/window/skip_taskbar/@enable", RIE_CTYPE_BOOL, "true",
+    { "window.skip_taskbar", RIE_CTYPE_BOOL, "true",
       offsetof(rie_settings_t, skip_taskbar), NULL, { NULL } },
 
-    { "/rieman-conf/window/skip_pager/@enable", RIE_CTYPE_BOOL, "true",
+    { "window.skip_pager", RIE_CTYPE_BOOL, "true",
       offsetof(rie_settings_t, skip_pager), NULL, { NULL } },
 
-    { "/rieman-conf/window/sticky/@enable", RIE_CTYPE_BOOL, "true",
+    { "window.sticky", RIE_CTYPE_BOOL, "true",
       offsetof(rie_settings_t, sticky), NULL, { NULL } },
 
-    { "/rieman-conf/window/layer/@value", RIE_CTYPE_STR, "normal",
+    { "window.layer", RIE_CTYPE_STR, "normal",
       offsetof(rie_settings_t, layer),
       rie_conf_set_variants, { &rie_conf_layers } },
 
-    { "/rieman-conf/window/position/@value", RIE_CTYPE_STR, "topleft",
+    { "window.position", RIE_CTYPE_STR, "topleft",
       offsetof(rie_settings_t, position),
       rie_conf_set_variants, { &rie_conf_positions } },
 
 
-    { "/rieman-conf/actions/change_desktop/@mouse_button", RIE_CTYPE_STR, "left",
+    { "actions.change_desktop.mouse_button", RIE_CTYPE_STR, "left",
       offsetof(rie_settings_t, change_desktop_button),
       rie_conf_set_variants, { &rie_conf_buttons } },
 
     /* configuration schema 1.1 */
 
-    { "/rieman-conf/actions/tile_windows/@mouse_button", RIE_CTYPE_STR, "right",
+    { "actions.change_desktop", RIE_CTYPE_BOOL, "true",
+      offsetof(rie_settings_t, enable_change_desktop_button), NULL, { NULL } },
+
+    { "actions.tile_windows.mouse_button", RIE_CTYPE_STR, "right",
       offsetof(rie_settings_t, tile_button),
       rie_conf_set_variants, { &rie_conf_buttons } },
 
     /* configuration schema 1.2 */
 
-    { "/rieman-conf/window/dock/@enable", RIE_CTYPE_BOOL, "false",
+    { "window.dock", RIE_CTYPE_BOOL, "false",
       offsetof(rie_settings_t, docked), NULL, { NULL } },
 
-    { "/rieman-conf/window/struts/@enable", RIE_CTYPE_BOOL, "false",
+    { "window.strut", RIE_CTYPE_BOOL, "false",
       offsetof(rie_settings_t, struts.enabled), NULL, { NULL } },
 
-    { "/rieman-conf/window/struts/@left", RIE_CTYPE_UINT32, "0",
+    { "window.strut.left", RIE_CTYPE_UINT32, "0",
       offsetof(rie_settings_t, struts.left), NULL, { NULL } },
 
-    { "/rieman-conf/window/struts/@left_start_y", RIE_CTYPE_UINT32, "0",
+    { "window.strut.left_start_y", RIE_CTYPE_UINT32, "0",
       offsetof(rie_settings_t, struts.left_start_y), NULL, { NULL } },
 
-    { "/rieman-conf/window/struts/@left_end_y", RIE_CTYPE_UINT32, "0",
+    { "window.strut.left_end_y", RIE_CTYPE_UINT32, "0",
       offsetof(rie_settings_t, struts.left_end_y), NULL, { NULL } },
 
-    { "/rieman-conf/window/struts/@right", RIE_CTYPE_UINT32, "0",
+    { "window.strut.right", RIE_CTYPE_UINT32, "0",
       offsetof(rie_settings_t, struts.right), NULL, { NULL } },
 
-    { "/rieman-conf/window/struts/@right_start_y", RIE_CTYPE_UINT32, "0",
+    { "window.strut.right_start_y", RIE_CTYPE_UINT32, "0",
       offsetof(rie_settings_t, struts.right_start_y), NULL, { NULL } },
 
-    { "/rieman-conf/window/struts/@right_end_y", RIE_CTYPE_UINT32, "0",
+    { "window.strut.right_end_y", RIE_CTYPE_UINT32, "0",
       offsetof(rie_settings_t, struts.right_end_y), NULL, { NULL } },
 
-    { "/rieman-conf/window/struts/@top", RIE_CTYPE_UINT32, "0",
+    { "window.strut.top", RIE_CTYPE_UINT32, "0",
       offsetof(rie_settings_t, struts.top), NULL, { NULL } },
 
-    { "/rieman-conf/window/struts/@top_start_x", RIE_CTYPE_UINT32, "0",
+    { "window.strut.top_start_x", RIE_CTYPE_UINT32, "0",
       offsetof(rie_settings_t, struts.top_start_x), NULL, { NULL } },
 
-    { "/rieman-conf/window/struts/@top_end_x", RIE_CTYPE_UINT32, "0",
+    { "window.strut.top_end_x", RIE_CTYPE_UINT32, "0",
       offsetof(rie_settings_t, struts.top_end_x), NULL, { NULL } },
 
-    { "/rieman-conf/window/struts/@bottom", RIE_CTYPE_UINT32, "0",
+    { "window.strut.bottom", RIE_CTYPE_UINT32, "0",
       offsetof(rie_settings_t, struts.bottom), NULL, { NULL } },
 
-    { "/rieman-conf/window/struts/@bottom_start_x", RIE_CTYPE_UINT32, "0",
+    { "window.strut.bottom_start_x", RIE_CTYPE_UINT32, "0",
       offsetof(rie_settings_t, struts.bottom_start_x), NULL, { NULL } },
 
-    { "/rieman-conf/window/struts/@bottom_end_x", RIE_CTYPE_UINT32, "0",
+    { "window.strut.bottom_end_x", RIE_CTYPE_UINT32, "0",
       offsetof(rie_settings_t, struts.bottom_end_x), NULL, { NULL } },
 
-    { "/rieman-conf/control/@socket", RIE_CTYPE_STR, "",
+    { "control.socket", RIE_CTYPE_STR, "",
       offsetof(rie_settings_t, control_socket_path), NULL, { NULL } },
 
-    { "/rieman-conf/window/position/@dx", RIE_CTYPE_UINT32, "0",
+    { "window.position.dx", RIE_CTYPE_UINT32, "0",
       offsetof(rie_settings_t, pos_x_offset), NULL, { NULL } },
 
-    { "/rieman-conf/window/position/@dy", RIE_CTYPE_UINT32, "0",
+    { "window.position.dy", RIE_CTYPE_UINT32, "0",
       offsetof(rie_settings_t, pos_y_offset), NULL, { NULL } },
 
     { NULL, 0, NULL, 0, NULL, { NULL } }
@@ -760,7 +763,7 @@ main(int argc, char *argv[])
     rie_log("rieman ver.%s (%s) started...", RIEMAN_VERSION, RIE_REV);
 
     if (cfile == NULL) {
-        if (rie_locate_config(&conf_file, "rieman.xml") != RIE_OK) {
+        if (rie_locate_config(&conf_file, "rieman.conf") != RIE_OK) {
             fprintf(stderr, "No usable configuration file found, exiting\n");
             goto failed;
         }

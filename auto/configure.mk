@@ -16,7 +16,6 @@ $(eval $(call pkg-test,test_xcb-ewmh_lib,xcb-ewmh,XCB_EWMH))
 $(eval $(call pkg-test,test_cairo_lib,cairo,CAIRO))
 $(eval $(call pkg-test,test_fc_lib,fontconfig,FONTCONFIG))
 $(eval $(call pkg-test,test_ft_lib,freetype2,FREETYPE))
-$(eval $(call pkg-test,test_xml_lib,libxml-2.0,XML))
 
 result=$(if $(findstring yes,$1),$2: yes,$2: no)
 oresult=$(if $1,$2: $1)

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE xs:schema PUBLIC "-//W3C//DTD XMLSCHEMA 200102//EN" "XMLSchema.dtd" >
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+ <xs:element name="rieman-skin">
+  <xs:complexType>
+   <xs:all>
+    <xs:element ref="fonts"              minOccurs="0" maxOccurs="1"/>
+    <xs:element ref="colors"             minOccurs="0" maxOccurs="1"/>
+    <xs:element ref="backgrounds"        minOccurs="0" maxOccurs="1"/>
+    <xs:element ref="borders"            minOccurs="0" maxOccurs="1"/>
+    <xs:element ref="icons"              minOccurs="0" maxOccurs="1"/>
+   </xs:all>
+   <xs:attribute name="name"    type="xs:string"  use="required"/>
+   <xs:attribute name="version" type="xs:decimal" use="required"/>
+  </xs:complexType>
+ </xs:element>
+
+ <xs:element name="colors">
+  <xs:complexType>
+   <xs:sequence>
+    <xs:element ref="colordef" minOccurs="1" maxOccurs="unbounded"/>
+   </xs:sequence>
+  </xs:complexType>
+ </xs:element>
+
+ <xs:element name="fonts">
+  <xs:complexType>
+   <xs:all>
+    <xs:element name="desktop-name"   type="fontdef" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="window-name"    type="fontdef" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="desktop-number" type="fontdef" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="gui"            type="fontdef" minOccurs="0" maxOccurs="1"/>
+   </xs:all>
+  </xs:complexType>
+ </xs:element>
+
+ <xs:element name="colordef">
+  <xs:complexType>
+   <xs:attribute name="name" type="xs:string" use="required"/>
+   <xs:attribute name="hex"  type="xs:string" use="required"/>
+  </xs:complexType>
+ </xs:element>
+
+ <xs:element name="backgrounds">
+  <xs:complexType>
+   <xs:all>
+    <xs:element name="pager" type="background" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="desktop" type="background" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="desktop-pad" type="background" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="desktop-active" type="background" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="viewport" type="background" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="viewport-active" type="background" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="window" type="background" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="window-active" type="background" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="window-attention" type="background" minOccurs="0" maxOccurs="1"/>
+   </xs:all>
+  </xs:complexType>
+ </xs:element>
+
+ <xs:element name="borders">
+  <xs:complexType>
+   <xs:all>
+    <xs:element name="pager" type="border" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="desktop-active" type="border" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="viewport" type="border" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="viewport-active" type="border" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="window" type="border" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="window-active" type="border" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="window-attention" type="border" minOccurs="0" maxOccurs="1"/>
+   </xs:all>
+  </xs:complexType>
+ </xs:element>
+
+ <xs:element name="icons">
+  <xs:complexType>
+   <xs:all>
+    <xs:element name="window" type="icon"/>
+   </xs:all>
+  </xs:complexType>
+ </xs:element>
+
+ <!--  Types  -->
+
+ <xs:simpleType name="alpha">
+   <xs:restriction base="xs:double">
+     <xs:minInclusive value="0"/>
+     <xs:maxInclusive value="1"/>
+   </xs:restriction>
+ </xs:simpleType>
+
+ <xs:complexType name="icon">
+  <xs:attribute name="alpha"    type="alpha"     use="optional"/>
+  <xs:attribute name="fallback" type="xs:string" use="required"/>
+ </xs:complexType>
+
+ <xs:complexType name="fontdef">
+  <xs:attribute name="size" type="xs:positiveInteger" use="required"/>
+  <!-- see "Font Names" section at
+       https://www.freedesktop.org/software/fontconfig/fontconfig-user.html
+   -->
+  <xs:attribute name="face"  type="xs:string" use="required"/>
+  <xs:attribute name="color" type="xs:string" use="optional"/>
+  <xs:attribute name="alpha" type="alpha"     use="optional"/>
+ </xs:complexType>
+
+ <xs:complexType name="background">
+  <xs:attribute name="type" use="required">
+   <xs:simpleType>
+    <xs:restriction base="xs:string">
+     <xs:enumeration value="image"/>
+     <xs:enumeration value="color"/>
+    </xs:restriction>
+   </xs:simpleType>
+  </xs:attribute>
+  <xs:attribute name="alpha" type="alpha"     use="optional"/>
+  <xs:attribute name="color" type="xs:string" use="optional"/>
+  <xs:attribute name="src"   type="xs:string" use="optional"/>
+ </xs:complexType>
+
+ <xs:complexType name="border">
+  <xs:attribute name="type" use="required">
+   <xs:simpleType>
+    <xs:restriction base="xs:string">
+     <xs:enumeration value="image"/>
+     <xs:enumeration value="color"/>
+    </xs:restriction>
+   </xs:simpleType>
+  </xs:attribute>
+  <xs:attribute name="width" type="xs:positiveInteger" use="required"/>
+  <xs:attribute name="color" type="xs:string" use="optional"/>
+  <xs:attribute name="src"  type="xs:string" use="optional"/>
+  <xs:attribute name="alpha" type="alpha" use="optional"/>
+ </xs:complexType>
+
+</xs:schema>

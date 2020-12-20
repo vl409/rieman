@@ -1,6 +1,6 @@
 
 #
-# Copyright (C) 2017 Vladimir Homutov
+# Copyright (C) 2017-2019 Vladimir Homutov
 #
 
 # This file is part of Rieman.
@@ -78,7 +78,7 @@ rie_tests = [
     { 'name': 'invalid configuration',
         'noexist': {
             'cmd': 'build/rieman -c foo',
-            'stdout': '^\[.*\] -log- using configuration file \'foo\'.*\[.*\] -err- failed to parse configuration file \"foo\".*',
+            'stdout': '^\[.*\] -log- using configuration file \'foo\'.*\[.*\] -err- open\(\"foo\"\) failed.*',
             'stderr': '',
             'rc': 1,
             'timeout': 1 },
@@ -90,98 +90,84 @@ rie_tests = [
             'rc': 1,
             'timeout': 1 },
 
-        'bad-xml': {
-            'cmd': 'build/rieman -c tests/conf/bad.xml',
-            'stdout': 'failed to parse configuration file "tests/conf/bad.xml".*configuration load failed',
-            'stderr': '.*',
-            'rc': 1,
-            'timeout': 1 },
-
-        'bad-schema': {
-            'cmd': 'build/rieman -c tests/conf/bad-2.xml',
-            'stdout': 'failed to parse schema.*configuration load failed',
-            'stderr': '.*',
-            'rc': 1,
-            'timeout': 1 },
-
-        'noroot': {
-            'cmd': 'build/rieman -c tests/conf/noroot.xml',
-            'stdout': 'unknown root element',
+        'bad-conf': {
+            'cmd': 'build/rieman -c tests/conf/bad.conf',
+            'stdout': 'syntax error.*configuration load failed',
             'stderr': '.*',
             'rc': 1,
             'timeout': 1 },
 
         'bad-key': {
-            'cmd': 'build/rieman -c tests/conf/bad-key.xml',
+            'cmd': 'build/rieman -c tests/conf/bad-key.conf',
             'stdout': 'conversion to bool failed: unknown value \'not-a-boolean\'.*configuration load failed',
             'stderr': '.*',
             'rc': 1,
             'timeout': 1 },
 
         'bad-key-validate': {
-            'cmd': 'build/rieman -c tests/conf/bad-key-validate.xml',
-            'stdout': 'configuration is not valid.*configuration load failed',
+            'cmd': 'build/rieman -c tests/conf/bad-key-validate.conf',
+            'stdout': 'conversion to bool failed.*configuration load failed',
             'stderr': '.*',
             'rc': 1,
             'timeout': 1 },
 
         'bad-key-2': {
-            'cmd': 'build/rieman -c tests/conf/bad-key-2.xml',
+            'cmd': 'build/rieman -c tests/conf/bad-key-2.conf',
             'stdout': 'conversion to uint32 failed: no digits.*configuration load failed',
             'stderr': '.*',
             'rc': 1,
             'timeout': 1 },
 
         'bad-key-3': {
-            'cmd': 'build/rieman -c tests/conf/bad-key-3.xml',
+            'cmd': 'build/rieman -c tests/conf/bad-key-3.conf',
             'stdout': 'conversion to uint32 failed: strtol.*configuration load failed',
             'stderr': '.*',
             'rc': 1,
             'timeout': 1 },
 
         'bad-key-4': {
-            'cmd': 'build/rieman -c tests/conf/bad-key-4.xml',
-            'stdout': 'invalid variant \'unknown\' of key \'/rieman-conf/layout/@corner\'.*configuration load failed',
+            'cmd': 'build/rieman -c tests/conf/bad-key-4.conf',
+            'stdout': 'invalid variant \'unknown\' of key \'layout\.corner\'.*configuration load failed',
             'stderr': '.*',
             'rc': 1,
             'timeout': 1 },
 
         'bad-key-5': {
-            'cmd': 'build/rieman -c tests/conf/bad-key-5.xml',
-            'stdout': 'invalid variant \'unknown-mask\' of key \'/rieman-conf/window/layer/@value\'.*configuration load failed',
+            'cmd': 'build/rieman -c tests/conf/bad-key-5.conf',
+            'stdout': 'invalid variant \'unknown-mask\' of key \'window\.layer\'.*configuration load failed',
             'stderr': '.*',
             'rc': 1,
             'timeout': 1 },
 
         'skin-bad-key': {
-            'cmd': 'build/rieman -c tests/conf/skin-bad-key.xml',
-            'stdout': 'value too big.*Failed to load skin configuration',
+            'cmd': 'build/rieman -c tests/conf/skin-bad-key.conf',
+            'stdout': 'conversion to hex failed.*Failed to load skin configuration',
             'stderr': 'rieman failed to start due to fatal error',
             'rc': 1,
             'timeout': 1 },
 
         'skin-bad-key-2': {
-            'cmd': 'build/rieman -c tests/conf/skin-bad-key-2.xml',
+            'cmd': 'build/rieman -c tests/conf/skin-bad-key-2.conf',
             'stdout': 'conversion of \'NODBL\' to double failed: no digits.*Failed to load skin configuration',
             'stderr': 'rieman failed to start due to fatal error',
             'rc': 1,
             'timeout': 1 },
 
         'skin-bad-key-3': {
-            'cmd': 'build/rieman -c tests/conf/skin-bad-key-3.xml',
+            'cmd': 'build/rieman -c tests/conf/skin-bad-key-3.conf',
             'stdout': 'conversion of .* to double failed: strtod.*Failed to load skin configuration',
             'stderr': 'rieman failed to start due to fatal error',
             'rc': 1,
             'timeout': 1 },
 
       'skin-bad-key-log': {
-            'cmd': 'build/rieman -c tests/conf/skin-bad-key.xml -l build/test-skin-bad-key.log',
+            'cmd': 'build/rieman -c tests/conf/skin-bad-key.conf -l build/test-skin-bad-key.log',
             'stdout': '.*',
             'stderr': 'rieman failed to start due to fatal error.*error log below:',
             'rc': 1,
             'timeout': 1 },
 
-        'exec': [ 'noexist', 'missing-name', 'bad-xml', 'bad-schema', 'noroot',
+        'exec': [ 'noexist', 'missing-name', 'bad-conf',
                   'bad-key', 'bad-key-2', 'bad-key-3', 'bad-key-4', 'bad-key-5',
                   'bad-key-validate', 'skin-bad-key', 'skin-bad-key-2',
                   'skin-bad-key-3', 'skin-bad-key-log'
@@ -193,7 +179,7 @@ rie_tests = [
 
         'default-exec': {
             'cmd': 'build/rieman',
-            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'./conf/rieman.xml\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
+            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'./conf/rieman.conf\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
             'stderr': '.*',
             'rc': 0,
             'timeout': 1 },
@@ -201,28 +187,28 @@ rie_tests = [
         'xdg': {
             'cmd': 'build/rieman',
             'env': { 'XDG_CONFIG_HOME': 'foo', 'XDG_DATA_HOME': 'foo' },
-            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'./conf/rieman.xml\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
+            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'./conf/rieman.conf\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
             'stderr': '.*',
             'rc': 0,
             'timeout': 1 },
 
         'c1': {
-            'cmd': 'build/rieman -c tests/conf/c1.xml',
-            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'tests/conf/c1.xml\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
+            'cmd': 'build/rieman -c tests/conf/c1.conf',
+            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'tests/conf/c1.conf\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
             'stderr': '.*',
             'rc': 0,
             'timeout': 1 },
 
         'c2': {
-            'cmd': 'build/rieman -c tests/conf/c2.xml',
-            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'tests/conf/c2.xml\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
+            'cmd': 'build/rieman -c tests/conf/c2.conf',
+            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'tests/conf/c2.conf\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
             'stderr': '.*',
             'rc': 0,
             'timeout': 1 },
 
         'c3': {
-            'cmd': 'build/rieman -c tests/conf/c3.xml',
-            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'tests/conf/c3.xml\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
+            'cmd': 'build/rieman -c tests/conf/c3.conf',
+            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'tests/conf/c3.conf\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
             'stderr': '.*',
             'rc': 0,
             'timeout': 1 },
@@ -234,15 +220,15 @@ rie_tests = [
     { 'name': 'skins',
 
         'skin-1': {
-            'cmd': 'build/rieman -c tests/conf/skin-1.xml',
-            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'tests/conf/skin-1.xml\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
+            'cmd': 'build/rieman -c tests/conf/skin-1.conf',
+            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'tests/conf/skin-1.conf\'\n\[.*\] -log- desktop geometry is \d+ x \d+.*',
             'stderr': '.*',
             'rc': 0,
             'timeout': 1 },
 
         'skin-3': {
-            'cmd': 'build/rieman -c tests/conf/skin-3.xml',
-            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'tests/conf/skin-3.xml\'.*\[.*\] -err- cairo_image_surface_create_from_png\(\'.*missing.png\'\).*',
+            'cmd': 'build/rieman -c tests/conf/skin-3.conf',
+            'stdout': '^\[.*\] -log- rieman ver\.\d\.\d\.\d .*started\.\.\.\n\[.*\] -log- using configuration file \'tests/conf/skin-3.conf\'.*\[.*\] -err- cairo_image_surface_create_from_png\(\'.*missing.png\'\).*',
             'stderr': 'rieman failed to start',
             'rc': 0,
             'timeout': 1 },
@@ -253,7 +239,7 @@ rie_tests = [
     { 'name': 'signals',
 
         'reload': {
-            'cmd': 'build/rieman -c tests/conf/skin-1.xml',
+            'cmd': 'build/rieman -c tests/conf/skin-1.conf',
             'stdout': '\*\*\* starting event loop.*\*\*\* reload signal received',
             'stderr': '.*',
             'rc': 0,
@@ -261,7 +247,7 @@ rie_tests = [
             'timeout': 1 },
 
         'term-and-withdrawn': {
-            'cmd': 'build/rieman -w -c tests/conf/skin-1.xml',
+            'cmd': 'build/rieman -w -c tests/conf/skin-1.conf',
             'stdout': '\*\*\* starting event loop.*\*\*\* terminate signal received',
             'stderr': '.*',
             'rc': 0,
@@ -269,7 +255,7 @@ rie_tests = [
             'timeout': 1 },
 
         'term-and-log': {
-            'cmd': 'build/rieman -c tests/conf/skin-1.xml -l build/test-term-and-log.log',
+            'cmd': 'build/rieman -c tests/conf/skin-1.conf-l build/test-term-and-log.log',
             'stdout': '.*',
             'stderr': '.*',
             'rc': 0,

@@ -532,6 +532,10 @@ rie_event_xcb_button_release(rie_t *pager, xcb_generic_event_t *ev)
         return rie_windows_tile(pager, new_desk);
     }
 
+    if (!pager->cfg->enable_change_desktop_button) {
+        return RIE_OK;
+    }
+
     /* button->state & pager->cfg->change_desktop_button */
 
     if (new_desk != pager->current_desktop) {

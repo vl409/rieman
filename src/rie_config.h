@@ -35,8 +35,6 @@ typedef enum {
     RIE_CTYPE_UINT32,
     RIE_CTYPE_DBL,
     RIE_CTYPE_BOOL,
-    RIE_CTYPE_CHAIN,
-    RIE_CTYPE_REF
 } rie_conf_type_t;
 
 typedef union {
@@ -61,6 +59,7 @@ struct rie_conf_item_s {
         void              *ptr;
         uint32_t           u32;
     } data;
+    int                    initialized;
 };
 
 typedef struct {

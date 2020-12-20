@@ -145,6 +145,7 @@ struct rie_settings_s {
         uint32_t     content;
     } desktop;
 
+    uint32_t         enable_change_desktop_button;
     uint32_t         change_desktop_button;
     uint32_t         tile_button;
 
