@@ -147,6 +147,7 @@ struct rie_settings_s {
 
     uint32_t         enable_change_desktop_button;
     uint32_t         change_desktop_button;
+    uint32_t         enable_tile_button;
     uint32_t         tile_button;
 
     uint32_t         skip_taskbar;          /* initial window state flags */

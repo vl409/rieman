@@ -163,6 +163,9 @@ static rie_conf_item_t rie_conf[] = {
     { "actions.change_desktop", RIE_CTYPE_BOOL, "true",
       offsetof(rie_settings_t, enable_change_desktop_button), NULL, { NULL } },
 
+    { "actions.tile_windows", RIE_CTYPE_BOOL, "true",
+      offsetof(rie_settings_t, enable_tile_button), NULL, { NULL } },
+
     { "actions.tile_windows.mouse_button", RIE_CTYPE_STR, "right",
       offsetof(rie_settings_t, tile_button),
       rie_conf_set_variants, { &rie_conf_buttons } },

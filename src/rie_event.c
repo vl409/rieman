@@ -525,8 +525,9 @@ rie_event_xcb_button_release(rie_t *pager, xcb_generic_event_t *ev)
         return RIE_OK;
     }
 
-    if (button->state & pager->cfg->tile_button) {
-
+    if (pager->cfg->enable_tile_button
+        && button->state & pager->cfg->tile_button)
+    {
         pager->render = 1;
 
         return rie_windows_tile(pager, new_desk);
