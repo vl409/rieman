@@ -1,0 +1,40 @@
+version 1.2.0: 2021-01-03
+
+    * changed configuration file format due to removing libxml dependency
+      now files use '.conf' extension and use simple key-value syntax.
+      use scripts/migrate_to_conf.sh to convert existing configuration files
+      into new format
+
+    + Tiling support: for WMs lacking it
+      Since rieman knows about all windows and can send commands to them,
+      it was simple to add 'tile windows on click at specific desktop'
+      feature. See man for details.
+
+    + Control socket support
+      you can send commands to running instance via UNIX socket.
+      Everything that could be done with signals and more.
+      More commands are expected in future versions.
+      Why? Not all WMs can deal with 2D-desktops grid and provide commands
+      to switch desktop in horizontal/vertical direction.
+
+    + NET_WM_STRUT family of atoms are supported. Rieman may now be configured
+      to reserve space on screen in compatible WMs.
+      Now it is also possible to set window type to 'dock'.
+      Window position handling is improved.
+
+    + X11 screen to use is now configurable
+
+    + Root window geometry is now tracked
+
+    + Psedo-transparency works properly with multiple monitors
+
+    * Lot of various small bugfixes
+
+version 1.1.0: was never released
+    * version skipped due to breaking changes introduced
+
+version 1.0.0: 2017-12-26
+    + bugfixes and cleanup
+
+version 0.9.1: 2017-12-24
+    * first released version
