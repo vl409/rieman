@@ -150,7 +150,7 @@ rie_window_query(rie_t *pager, rie_window_t *window, uint32_t winid)
 
     window->winid = winid;
 
-    rc = rie_xcb_property_get_utftext(xcb, winid, RIE_WM_NAME, &textres);
+    rc = rie_xcb_property_get_utftext(xcb, winid, RIE_NET_WM_NAME, &textres);
     if (rc == RIE_ERROR) {
         return RIE_ERROR;
 
