@@ -43,6 +43,7 @@ struct rie_xcb_s {
 static int rie_xcb_init_atoms(rie_xcb_t *xcb);
 static int rie_xcb_set_window_borderless(rie_xcb_t *xcb);
 static int rie_xcb_set_window_title(rie_xcb_t *xcb);
+static char *rie_xcb_atom_name(rie_xcb_t *xcb, xcb_atom_t atom, int *len);
 
 
 static const char *rie_atom_names[] = {
@@ -763,11 +764,56 @@ rie_xcb_property_get(rie_xcb_t *xcb, xcb_window_t win,
 }
 
 
+static char *
+rie_xcb_atom_name(rie_xcb_t *xcb, xcb_atom_t atom, int *len)
+{
+    char  *name, *res;
+
+    xcb_generic_error_t         *err;
+    xcb_get_atom_name_reply_t   *reply;
+    xcb_get_atom_name_cookie_t   cookie;
+
+    cookie = xcb_get_atom_name(xcb->xc, atom);
+
+    reply = xcb_get_atom_name_reply(xcb->xc, cookie, &err);
+
+    if (reply == NULL) {
+        rie_xcb_handle_error0(err, "xcb_get_atom_name_reply");
+        return NULL;
+    }
+
+    *len = xcb_get_atom_name_name_length(reply);
+    if (*len == 0) {
+        rie_debug("xcb_get_atom_name_name_length(%d): empty name", atom);
+
+        free(reply);
+        return NULL;
+    }
+
+    name = xcb_get_atom_name_name(reply);
+
+    res = malloc(*len + 1);
+    if (res == NULL) {
+        rie_log_error0(errno, "malloc");
+        free(reply);
+        return NULL;
+    }
+
+    memcpy(res, name, *len);
+    res[*len] = 0;
+
+    free(reply);
+
+    return res;
+}
+
+
 int
 rie_xcb_property_get_array(rie_xcb_t *xcb, xcb_window_t win,
     unsigned int property, xcb_atom_t type, rie_array_t *res)
 {
     int          i;
+    char        *aname;
     size_t       len, is;
     uint32_t    *u32, *a32;
     xcb_atom_t  *atom, *aa;
@@ -793,8 +839,17 @@ rie_xcb_property_get_array(rie_xcb_t *xcb, xcb_window_t win,
     }
 
     if (reply->type != type) {
-        rie_log_error(0, "xcb_get_property(%s): unexpected type: %d",
-                      rie_atom_names[property], reply->type);
+
+        aname = rie_xcb_atom_name(xcb, reply->type, &i);
+        if (aname) {
+            rie_log_error(0, "xcb_get_property(%s): unexpected type: \"%.*s\"",
+                          rie_atom_names[property], i, aname);
+            free(aname);
+        } else {
+            rie_log_error(0, "xcb_get_property(%s): unexpected type: %d",
+                          rie_atom_names[property], reply->type);
+        }
+
         return RIE_ERROR;
     }
 
@@ -980,8 +1035,17 @@ rie_xcb_property_get_array_utftext(rie_xcb_t *xcb, xcb_window_t win,
           || reply->type == xcb->atoms[RIE_COMPOUND_TEXT]
           || reply->type == xcb->atoms[RIE_STRING]))
     {
-        rie_log_error(0, "xcb_get_property(%s): unexpected type: %d",
-                      rie_atom_names[property], reply->type);
+
+        val = rie_xcb_atom_name(xcb, reply->type, &len);
+        if (val) {
+            rie_log_error(0, "xcb_get_property(%s): unexpected type: \"%.*s\"",
+                          rie_atom_names[property], len, val);
+            free(val);
+        } else {
+
+            rie_log_error(0, "xcb_get_property(%s): unexpected type: %d",
+                          rie_atom_names[property], reply->type);
+        }
         free(reply);
         return RIE_ERROR;
     }
