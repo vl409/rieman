@@ -34,7 +34,7 @@ struct rie_font_ctx_s {
 
 
 rie_font_ctx_t *
-rie_font_ctx_new(rie_fc_t *fc)
+rie_font_ctx_new()
 {
     rie_font_ctx_t  *font_ctx;
 
