@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017-2020 Vladimir Homutov
+ * Copyright (C) 2017-2022 Vladimir Homutov
  */
 
 /*
@@ -389,7 +389,7 @@ rie_skin_new(char *name, rie_gfx_t *gc)
         return NULL;
     }
 
-    memset(skin, 0, sizeof(struct rie_skin_s));
+    rie_memzero(skin, sizeof(struct rie_skin_s));
 
     skin->meta.version_min = 11;
     skin->meta.version_max = 11;

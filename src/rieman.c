@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017-2020 Vladimir Homutov
+ * Copyright (C) 2017-2022 Vladimir Homutov
  */
 
 /*
@@ -635,8 +635,8 @@ rie_pager_new(char *cfile, rie_log_t *log)
         return NULL;
     }
 
-    memset(cfg, 0, sizeof(rie_settings_t));
-    memset(pager, 0, sizeof(rie_t));
+    rie_memzero(cfg, sizeof(rie_settings_t));
+    rie_memzero(pager, sizeof(rie_t));
 
     cfg->meta.version_min = 10;
     cfg->meta.version_max = 12;

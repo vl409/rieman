@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017 Vladimir Homutov
+ * Copyright (C) 2017-2022 Vladimir Homutov
  */
 
 /*
@@ -43,7 +43,7 @@ rie_array_init(rie_array_t *array, size_t nitems, size_t item_len,
 
     array->nitems = nitems;
 
-    memset(array->data, 0, nitems * item_len);
+    rie_memzero(array->data, nitems * item_len);
 
     array->xfree = free_func;
 

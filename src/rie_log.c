@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017 Vladimir Homutov
+ * Copyright (C) 2017-2022 Vladimir Homutov
  */
 
 /*
@@ -52,7 +52,7 @@ rie_log_new(char *filename)
         return NULL;
     };
 
-    memset(rie_logp, 0, sizeof(rie_log_t));
+    rie_memzero(rie_logp, sizeof(rie_log_t));
 
     if (filename == NULL) {
         rie_logp->file = stdout;

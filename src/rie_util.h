@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017 Vladimir Homutov
+ * Copyright (C) 2017-2022 Vladimir Homutov
  */
 
 /*
@@ -24,8 +24,10 @@
 
 
 #define rie_swap(x, y, typ) \
-  do { typ tmp = x; x = y; y = tmp; } while (0)
+    do { typ tmp = x; x = y; y = tmp; } while (0)
 
+#define rie_memzero(ptr, size) \
+    memset(ptr, 0, size)
 
 /* get pointer to i-th element of array if present, or to first */
 #define rie_array_get(arr, i, type)                     \

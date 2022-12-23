@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017 Vladimir Homutov
+ * Copyright (C) 2017-2022 Vladimir Homutov
  */
 
 /*
@@ -132,7 +132,7 @@ rie_test_init()
         rie_log_error0(errno, "malloc");
         exit(EXIT_FAILURE);
     }
-    memset(ctx, 0, sizeof(rie_test_ctx_t));
+    rie_memzero(ctx, sizeof(rie_test_ctx_t));
 
     ctx->pagerp = &pagerp;
 
@@ -616,7 +616,7 @@ rie_testcase_desktop_name_change(rie_t *pager, rie_testcase_t *tc)
     /* wait for change to happen */
     rie_test_poll_cond(tc, pager->desktops.nitems != n + 1, 1000);
 
-    memset(&desktop_names, 0, sizeof(rie_array_t));
+    rie_memzero(&desktop_names, sizeof(rie_array_t));
 
     /* save original desktop names */
     if (rie_test_get_desktop_names(pager->xcb, &desktop_names) != RIE_OK) {
@@ -785,7 +785,7 @@ rie_testcase_geometry_fallback(rie_t *pager, rie_testcase_t *tc)
     rie_array_t   res;
 
     /* preserve original settings of property */
-    memset(&res, 0, sizeof(rie_array_t));
+    rie_memzero(&res, sizeof(rie_array_t));
 
     rc = rie_xcb_property_get_array(pager->xcb, rie_xcb_get_root(pager->xcb),
                                      RIE_NET_DESKTOP_GEOMETRY,

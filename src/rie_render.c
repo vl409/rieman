@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017 Vladimir Homutov
+ * Copyright (C) 2017-2022 Vladimir Homutov
  */
 
 /*
@@ -595,7 +595,7 @@ rie_create_borders(rie_border_create_t *args)
     box = args->box;
     borders = args->borders;
 
-    memset(borders, 0, sizeof(rie_grid_elem_t) * RIE_FRAME_LAST);
+    rie_memzero(borders, sizeof(rie_grid_elem_t) * RIE_FRAME_LAST);
 
     for (i = 0; i < RIE_FRAME_LAST; i++) {
 
@@ -1369,7 +1369,7 @@ rie_render_icon(rie_t *pager, rie_image_t *image, rie_rect_t wbox,
     rie_rect_t     ibox;
     rie_texture_t  tspec;
 
-    memset(&tspec, 0, sizeof(rie_texture_t));
+    rie_memzero(&tspec, sizeof(rie_texture_t));
 
     /* icon bounding box is smaller than window box at ICON_BB_SCALE times */
     ibox = rie_box_scale(wbox, ICON_BB_SCALE, ICON_BB_SCALE);

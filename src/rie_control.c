@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2020 Vladimir Homutov
+ * Copyright (C) 2020-2022 Vladimir Homutov
  */
 
 /*
@@ -79,7 +79,7 @@ rie_control_new(rie_settings_t *cfg, void *data)
         return NULL;
     }
 
-    memset(ctl, 0, sizeof(struct rie_control_s));
+    rie_memzero(ctl, sizeof(struct rie_control_s));
 
     ctl->data = data;
     ctl->path = cfg->control_socket_path;
@@ -143,7 +143,7 @@ rie_control_send_message(char *sockpath, char *msg)
         return RIE_ERROR;
     }
 
-    memset(&sa, 0, sizeof(struct sockaddr_un));
+    rie_memzero(&sa, sizeof(struct sockaddr_un));
 
     slen = sizeof(struct sockaddr_un);
     sa.sun_family = AF_UNIX;

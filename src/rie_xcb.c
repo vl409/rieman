@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017-2020 Vladimir Homutov
+ * Copyright (C) 2017-2022 Vladimir Homutov
  */
 
 /*
@@ -122,7 +122,7 @@ rie_xcb_new(rie_settings_t *cfg)
         return NULL;
     }
 
-    memset(xcb, 0, sizeof(rie_xcb_t));
+    rie_memzero(xcb, sizeof(rie_xcb_t));
 
     /* use server set by DISPLAY environment variable, choose screeen if any */
     xcb->xc = xcb_connect (NULL, &xcb->screen);
@@ -732,7 +732,7 @@ rie_xcb_property_get(rie_xcb_t *xcb, xcb_window_t win,
         xcb_drawable_t  dwb;
     } *u;
 
-    memset(&res, 0, sizeof(rie_array_t));
+    rie_memzero(&res, sizeof(rie_array_t));
 
     rc = rie_xcb_property_get_array(xcb, win, property, type, &res);
     if (rc != RIE_OK) {
@@ -980,7 +980,7 @@ rie_xcb_property_get_utftext(rie_xcb_t *xcb, xcb_window_t win,
 
     rie_array_t array;
 
-    memset(&array, 0, sizeof(rie_array_t));
+    rie_memzero(&array, sizeof(rie_array_t));
 
     rc = rie_xcb_property_get_array_utftext(xcb, win, property, &array);
 
@@ -1092,7 +1092,7 @@ rie_xcb_client_message(rie_xcb_t *xcb, xcb_window_t target,
         return RIE_ERROR;
     }
 
-    memset(&event, 0, sizeof(xcb_client_message_event_t));
+    rie_memzero(&event, sizeof(xcb_client_message_event_t));
 
     event.response_type = XCB_CLIENT_MESSAGE;
     event.format = 32;
@@ -1277,7 +1277,7 @@ rie_xcb_get_window_state(rie_xcb_t *xcb, rie_window_t *window,
 
     char  buf[512], *p; /* enough to fit all states names + separators */
 
-    memset(&res, 0, sizeof(rie_array_t));
+    rie_memzero(&res, sizeof(rie_array_t));
 
     rc = rie_xcb_property_get_array(xcb, xwin, RIE_NET_WM_STATE, XCB_ATOM_ATOM,
                                     &res);

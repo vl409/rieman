@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017 Vladimir Homutov
+ * Copyright (C) 2017-2022 Vladimir Homutov
  */
 
 /*
@@ -264,7 +264,7 @@ rie_window_get_icon(rie_xcb_t *xcb, rie_gfx_t *gc, rie_window_t *window)
     rie_array_t   res, *icons;
     rie_image_t  *img;
 
-    memset(&res, 0, sizeof(rie_array_t));
+    rie_memzero(&res, sizeof(rie_array_t));
 
     rc = rie_xcb_property_get_array(xcb, window->winid, RIE_NET_WM_ICON,
                                     XCB_ATOM_CARDINAL, &res);
