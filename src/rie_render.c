@@ -495,6 +495,16 @@ rie_set_pager_geometry(rie_t *pager, rie_rect_t *win)
             break;
         }
 
+        /*
+         * the dock determines window position itself;
+         * moving the window may lead to out-of-screen position
+         */
+        if (pager->cfg->withdrawn) {
+            x = 0;
+            y = 0;
+            rie_debug("window move avoided while in dock");
+        }
+
         rie_xcb_configure_window(pager->xcb, x, y, win->w, win->h);
         rie_gfx_resize(pager->gfx, win->w, win->h);
 
