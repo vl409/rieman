@@ -170,6 +170,8 @@ rie_xcb_new(rie_settings_t *cfg)
     }
 
     if (cfg->withdrawn) {
+        rie_memzero(&hints, sizeof(xcb_icccm_wm_hints_t));
+
         xcb_icccm_wm_hints_set_withdrawn(&hints);
 
         vcookie = xcb_icccm_set_wm_hints_checked(xcb->xc, xcb->window, &hints);
@@ -305,11 +307,12 @@ rie_xcb_set_window_borderless(rie_xcb_t *xcb)
     };
 
 
+    /* data size is specified in number of elements of specified size (32b) */
     vcookie = xcb_change_property_checked(xcb->xc,
                                   XCB_PROP_MODE_REPLACE, xcb->window,
                                   xcb->atoms[RIE_MOTIF_WM_HINTS],
                                   xcb->atoms[RIE_MOTIF_WM_HINTS], 32,
-                                  sizeof(MWMHints) / sizeof(long), &MWMHints);
+                                  sizeof(MWMHints) / 4, &MWMHints);
 
     err = xcb_request_check(xcb->xc, vcookie);
     if (err != NULL) {
