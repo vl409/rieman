@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017-2020 Vladimir Homutov
+ * Copyright (C) 2017-2022 Vladimir Homutov
  */
 
 /*
@@ -32,7 +32,7 @@
 #include <errno.h>
 
 
-#define RIEMAN_VERSION "1.2.2"
+#define RIEMAN_VERSION "1.2.3"
 #define RIEMAN_TITLE   "Rieman"
 
 typedef struct rie_conf_item_s rie_conf_item_t;
