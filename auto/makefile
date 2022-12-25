@@ -48,7 +48,7 @@ src-to-dep = $(subst src/,build/,$(subst .c,.d,$(filter %.c,$1)))
 OS:=$(shell uname -r -o -m)
 
 # if building from a cloned sources, revision is embedded
-REV:=$(shell if [ -d .git ]; then git rev-parse HEAD; else echo "pkg"; fi)
+REV:=$(shell if [ -d .git ]; then git describe --tags; else echo "pkg"; fi)
 
 build/config.h: $(testbins)
 	@echo "#ifndef __CONFIG_H__" > $@
