@@ -637,6 +637,12 @@ failed:
 int
 rie_conf_load(char *conf_file, rie_conf_meta_t *meta, void *ctx)
 {
+    rie_conf_item_t  *spec;
+
+    for (spec = meta->spec; spec->name; spec++) {
+        spec->initialized = 0;
+    }
+
     if (rie_conf_parse(conf_file, meta->spec, ctx) != RIE_OK) {
         rie_conf_cleanup(meta, ctx);
         return RIE_ERROR;
