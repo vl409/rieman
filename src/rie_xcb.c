@@ -24,7 +24,6 @@
 
 #include <stdarg.h>
 #include <stdio.h>
-#include <xcb/xcb_util.h>
 
 /* #define RIE_XCB_DBG */
 
