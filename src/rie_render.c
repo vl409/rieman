@@ -51,7 +51,7 @@ static inline rie_rect_t rie_box_fit(rie_rect_t canvas, rie_rect_t box);
 static inline rie_rect_t rie_scale_to_desktop(rie_t *pager, rie_desktop_t *desk,
     rie_rect_t box);
 
-static void rie_count_hidden_windows(rie_t *pager, int i);
+static void rie_count_hidden_windows(rie_t *pager);
 static int rie_draw_desktops(rie_t *pager);
 static int rie_draw_windows(rie_t *pager);
 static int rie_set_pager_geometry(rie_t *pager, rie_rect_t *win);
@@ -254,9 +254,9 @@ rie_scale_to_desktop(rie_t *pager, rie_desktop_t *desk, rie_rect_t box)
 
 
 static void
-rie_count_hidden_windows(rie_t *pager, int i)
+rie_count_hidden_windows(rie_t *pager)
 {
-    int  j;
+    int  i, j;
 
     rie_window_t   *win;
     rie_desktop_t  *desk;
@@ -264,21 +264,24 @@ rie_count_hidden_windows(rie_t *pager, int i)
     win = pager->windows.data;
     desk = pager->desktops.data;
 
-    desk[i].nhidden = 0;
-    desk[i].nnormal = 0;
+    for (i = 0; i < pager->desktops.nitems; i++) {
 
-    for (j = 0; j < pager->windows.nitems; j++) {
+        desk[i].nhidden = 0;
+        desk[i].nnormal = 0;
 
-        if (win[j].desktop != i) {
-            continue;
+        for (j = 0; j < pager->windows.nitems; j++) {
+
+            if (win[j].desktop != i) {
+                continue;
+            }
+
+            if (!(win[j].state & RIE_WIN_STATE_HIDDEN)) {
+                desk[i].nnormal++;
+                continue;
+            }
+
+            win[j].hidden_idx = desk[i].nhidden++;
         }
-
-        if (!(win[j].state & RIE_WIN_STATE_HIDDEN)) {
-            desk[i].nnormal++;
-            continue;
-        }
-
-        win[j].hidden_idx = desk[i].nhidden++;
     }
 }
 
@@ -309,6 +312,8 @@ rie_draw_desktops(rie_t *pager)
             ? pager->ncols
             : pager->nrows;
 
+    rie_count_hidden_windows(pager);
+
     /* draw all desktops in a 2D grid */
     for (i = 0, col = 0, row = 0; i < pager->desktops.nitems; i++, col++) {
 
@@ -318,8 +323,6 @@ rie_draw_desktops(rie_t *pager)
         }
 
         desk = rie_nth_desktop(pager, i);
-
-        rie_count_hidden_windows(pager, i);
 
         if (rie_draw_desktop(pager, desk, row - 1, col, m_desk == i)
             != RIE_OK)
