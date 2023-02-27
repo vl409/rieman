@@ -1,4 +1,4 @@
-.TH rieman 1 "2020-12-14" "GNU/Linux" "User's Manual"
+.TH rieman 1 "2023-02-27" "GNU/Linux" "User's Manual"
 
 .SH "NAME"
 rieman \- The X11 desktop pager
@@ -58,6 +58,8 @@ Configuration reload
 Simple tiling for desktop windows (1.1)
 .IP \(bu 4
 Control commands via configuration socket (1.2)
+.IP \(bu 4
+Per-output desktop subset display (1.3)
 
 
 .SH "OPTIONS"
@@ -176,6 +178,31 @@ to autocalculated setting based on screen aspect ratio.
 The wrap parameter defines length of a row or column (depending on orientation).
 The corner is one of "topleft", "topright", "bottomleft" or "bottomright" and
 defines how desktops are arranged. See _NET_DESKTOP_LAYOUT for details.
+
+.TP
+.I subset.enabled <true | false>
+
+.I subset.output <RANDR_output>
+
+.I subset.start_desktop <n>
+
+.I subset.ndesktops <n>
+
+The "subsets" mode enables special mode, in which:
+
+1) only a subset of virtual desktops is shown (start...start + ndesktops).
+
+2) desktop geometry is determined by specified RandR output resolution.
+
+This is useful in multi-monitor configuration, where each monitor has its
+own set of virtual desktops, and desktop size is a summ of monitor sizes.
+The mode allows to run multiple instance of rieman, each attached to
+specific monitor and showing only desktops visible on the specific monitor.
+
+The feature was tested with awesome WM. Note that root window property
+_NET_CURRENT_DESKTOP allows to be set only once, so you cannot have active
+desktop highlighted in all rieman instances (in awesome's terms, this is
+currently selected tag, to which we have on access from outside).
 
 .TP
 .I appearance.skin <name>

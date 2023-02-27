@@ -145,6 +145,19 @@ struct rie_settings_s {
         uint32_t     content;
     } desktop;
 
+    struct {
+        uint32_t    enabled;
+        uint32_t    start_desktop;          /* first desktop on this out */
+        uint32_t    ndesktops;              /* number of desktops on this out */
+
+        char        *output;                /* RandR name of output */
+
+        /*
+         * if subset mode is enabled, only desktops that attached
+         * to specific monitor (RandR output) are shown/managed
+         */
+    } subset;
+
     uint32_t         enable_change_desktop_button;
     uint32_t         change_desktop_button;
     uint32_t         enable_tile_button;
@@ -183,12 +196,17 @@ struct rie_s {
     rie_image_t      root_bg;               /* root window background */
     rie_desktop_t    template;
 
+    rie_rect_t       monitor_geom;          /* RandR output geometry */
+
     rie_array_t      windows;               /* of rie_window_t  */
     rie_array_t      desktop_names;         /* of char *        */
     rie_array_t      desktops;              /* of rie_desktop_t */
     rie_array_t      workareas;             /* of rie_rect_t    */
     rie_array_t      viewports;             /* of rie_rect_t    */
     rie_array_t      virtual_roots;         /* of xcb_window_t  */
+
+    rie_array_t      vdesktops;             /* of rie_desktop_t* */
+                                            /* slice view of desktops */
 
     uint32_t         current_desktop;       /* active desktop number       */
     uint32_t         selected_desktop;      /* currently selected by mouse */

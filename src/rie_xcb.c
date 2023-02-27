@@ -36,9 +36,12 @@ struct rie_xcb_s {
     xcb_screen_t           *xs;
     xcb_ewmh_connection_t   ewmh;
     rie_rect_t              root_geom;
+    uint8_t                 event_base_randr;
     xcb_atom_t              atoms[RIE_ATOM_LAST];
 };
 
+
+static int rie_xcb_enable_randr(rie_xcb_t *xcb);
 static int rie_xcb_init_atoms(rie_xcb_t *xcb);
 static int rie_xcb_set_window_borderless(rie_xcb_t *xcb);
 static int rie_xcb_set_window_title(rie_xcb_t *xcb);
@@ -155,6 +158,18 @@ rie_xcb_new(rie_settings_t *cfg)
         return NULL;
     }
 
+    if (cfg->subset.enabled) {
+
+        if (strlen(cfg->subset.output) == 0) {
+            rie_log_error(0, "subsets enabled, but no subsets.output is set");
+            return NULL;
+        }
+
+        if (rie_xcb_enable_randr(xcb) != RIE_OK) {
+            return NULL;
+        }
+    }
+
     /*
      * PropertyChangeMask is expected to be set by WM,
      * but this is not always true;
@@ -215,6 +230,58 @@ rie_xcb_new(rie_settings_t *cfg)
 
     return xcb;
 }
+
+
+static int
+rie_xcb_enable_randr(rie_xcb_t *xcb)
+{
+    xcb_generic_error_t                *err;
+    xcb_randr_query_version_reply_t    *ver_reply;
+    xcb_randr_query_version_cookie_t    ver_cookie;
+    const xcb_query_extension_reply_t  *ext_reply;
+
+    ext_reply = xcb_get_extension_data(xcb->xc, &xcb_randr_id);
+    if (ext_reply == NULL) {
+        rie_log_error(0, "failed to query for RandR extension");
+        return RIE_ERROR;
+    }
+
+    xcb->event_base_randr = ext_reply->first_event;
+
+    if (!ext_reply->present) {
+        rie_log_error(0, "RandR extension is not present");
+        return RIE_ERROR;
+    }
+
+    ver_cookie = xcb_randr_query_version(xcb->xc, 1, 5);
+
+    ver_reply = xcb_randr_query_version_reply(xcb->xc, ver_cookie, &err);
+    if (ver_reply == NULL) {
+        return rie_xcb_handle_error0(err, "xcb_randr_query_version_reply");
+    }
+
+    rie_debug("found RandR extension v.%d.%d, ext base is %d",
+              ver_reply->major_version, ver_reply->minor_version,
+              xcb->event_base_randr);
+
+    free(ver_reply);
+
+    /* TODO: which exactly events are needed? */
+    xcb_randr_select_input(xcb->xc, xcb->root,
+                           XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE
+                           | XCB_RANDR_NOTIFY_MASK_OUTPUT_CHANGE
+                           | XCB_RANDR_NOTIFY_MASK_OUTPUT_PROPERTY);
+
+    return RIE_OK;
+}
+
+
+uint8_t
+rie_xcb_randr_event(rie_xcb_t *xcb, uint8_t off)
+{
+    return xcb->event_base_randr + off;
+}
+
 
 void
 rie_xcb_delete(rie_xcb_t *xcb)
@@ -1617,6 +1684,96 @@ rie_xcb_set_desktop_layout(rie_xcb_t *xcb, rie_settings_t *cfg)
     if (error != NULL) {
         return rie_xcb_handle_error0(error, "xcb_ewmh_set_desktop_layout");
     }
+
+    return RIE_OK;
+}
+
+
+int
+rie_xcb_get_output(rie_xcb_t *xcb, char *name, rie_rect_t *geom)
+{
+    int       i, oname_len, nouts, found;
+    size_t    len;
+    uint8_t  *oname;
+
+    xcb_randr_crtc_t                          crtc;
+    xcb_randr_output_t                       *outs;
+    xcb_generic_error_t                      *err;
+    xcb_randr_get_crtc_info_reply_t          *crtc_reply;
+    xcb_randr_get_crtc_info_cookie_t          crtc_cookie;
+    xcb_randr_get_output_info_cookie_t        out_cookie;
+    xcb_randr_get_output_info_reply_t        *out_reply;
+    xcb_randr_get_screen_resources_reply_t   *sr_reply;
+    xcb_randr_get_screen_resources_cookie_t   sr_cookie;
+
+    len = strlen(name);
+
+    sr_cookie = xcb_randr_get_screen_resources(xcb->xc, xcb->window);
+
+    sr_reply = xcb_randr_get_screen_resources_reply(xcb->xc, sr_cookie, &err);
+    if (sr_reply == NULL) {
+        return rie_xcb_handle_error0(err,
+                                     "xcb_randr_get_screen_resources_reply");
+    }
+
+    nouts = xcb_randr_get_screen_resources_outputs_length(sr_reply);
+    outs = xcb_randr_get_screen_resources_outputs(sr_reply);
+
+    found = 0;
+
+    for (i = 0; i < nouts; i++) {
+
+        out_cookie = xcb_randr_get_output_info(xcb->xc, outs[i], 0);
+
+        out_reply = xcb_randr_get_output_info_reply(xcb->xc, out_cookie, &err);
+        if (out_reply == NULL) {
+            free(sr_reply);
+            return rie_xcb_handle_error0(err,
+                                         "xcb_randr_get_output_info_reply");
+        }
+
+        oname_len = xcb_randr_get_output_info_name_length(out_reply);
+        if (oname_len != len) {
+            free(out_reply);
+            continue;
+        }
+
+        oname = xcb_randr_get_output_info_name(out_reply);
+        if (strncmp((char *) oname, name, len) != 0) {
+            free(out_reply);
+            continue;
+        }
+
+        found = 1;
+        crtc = out_reply->crtc;
+
+        free(out_reply);
+    }
+
+    free(sr_reply);
+
+    if (!found) {
+        rie_log_error(0, "RandR output '%s' is not found, check configuration!",
+                      name);
+        return RIE_ERROR;
+    }
+
+    crtc_cookie = xcb_randr_get_crtc_info(xcb->xc, crtc, 0);
+
+    crtc_reply = xcb_randr_get_crtc_info_reply(xcb->xc, crtc_cookie, &err);
+    if(crtc_reply == NULL) {
+        return rie_xcb_handle_error0(err, "xcb_randr_get_crtc_info_reply");
+    }
+
+    geom->x = crtc_reply->x;
+    geom->y = crtc_reply->y;
+    geom->w = crtc_reply->width;
+    geom->h = crtc_reply->height;
+
+    free(crtc_reply);
+
+    rie_log("RandR output '%s' is %dx%d +%d+%d",
+            name, geom->w, geom->h, geom->x, geom->y);
 
     return RIE_OK;
 }

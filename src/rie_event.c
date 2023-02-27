@@ -54,6 +54,7 @@ static int rie_event_xcb_button_release(rie_t *pager, xcb_generic_event_t *ev);
 static int rie_event_xcb_configure_notify(rie_t *pager, xcb_generic_event_t *ev);
 static int rie_event_xcb_destroy_notify(rie_t *pager, xcb_generic_event_t *ev);
 static int rie_event_xcb_property_notify(rie_t *pager, xcb_generic_event_t *ev);
+static int rie_event_xcb_randr_notify(rie_t *pager, xcb_generic_event_t *ev);
 static int rie_event_number_of_desktops(rie_t *pager, xcb_generic_event_t *ev);
 static int rie_event_desktop_names(rie_t *pager, xcb_generic_event_t *ev);
 static int rie_event_current_desktop(rie_t *pager, xcb_generic_event_t *ev);
@@ -78,7 +79,11 @@ rie_event_t rie_event_handlers[] = {
     { named(XCB_BUTTON_RELEASE),   rie_event_xcb_button_release,   1 },
     { named(XCB_CONFIGURE_NOTIFY), rie_event_xcb_configure_notify, 1 },
     { named(XCB_DESTROY_NOTIFY),   rie_event_xcb_destroy_notify,   0 },
-    { named(XCB_PROPERTY_NOTIFY),  rie_event_xcb_property_notify,  0 }
+    { named(XCB_PROPERTY_NOTIFY),  rie_event_xcb_property_notify,  0 },
+};
+
+rie_event_t rie_randr_event_handlers[] = {
+    { named(XCB_RANDR_NOTIFY),     rie_event_xcb_randr_notify,     1 }
 };
 
 rie_event_t rie_property_event_handlers[] ={
@@ -120,6 +125,10 @@ rie_event_init(rie_t *pager)
         NULL
     };
 
+    if (pager->cfg->subset.enabled) {
+        rie_event_xcb_randr_notify(pager, NULL);
+    }
+
     /* trigger fake events to populate initial settings */
     for (i = 0; init_handlers[i]; i++) {
         if (init_handlers[i](pager, NULL) != RIE_OK) {
@@ -141,6 +150,7 @@ rie_event_cleanup(rie_t *pager)
     }
 
     rie_array_wipe(&pager->desktops);
+    rie_array_wipe(&pager->vdesktops);
     rie_array_wipe(&pager->desktop_names);
 
     rie_array_wipe(&pager->workareas);
@@ -301,28 +311,48 @@ rie_event_mask(rie_t *pager, xcb_generic_event_t *ev)
 static int
 rie_event_handle_pager_event(rie_t *pager, xcb_generic_event_t *ev)
 {
-    int  i;
+    int      i;
+    size_t   nhandlers;
+    uint8_t  evid;
 
-    static size_t nevents =
-                    sizeof(rie_event_handlers) / sizeof(rie_event_handlers[0]);
+    nhandlers = sizeof(rie_event_handlers) / sizeof(rie_event_handlers[0]);
 
     /* lookup known events */
-    for (i = 0; i < nevents; i++) {
+    for (i = 0; i < nhandlers; i++) {
         if (rie_xcb_event_type(ev) == rie_event_handlers[i].id) {
             if (rie_event_handlers[i].loggable) {
                 rie_debug("event %s", rie_event_handlers[i].evname);
             }
-            break;
+            return rie_event_handlers[i].handler(pager, ev);
         }
     }
 
-    if (i == nevents) {
-        /* unknown event */
-        rie_debug("unknown event #%d", rie_xcb_event_type(ev));
-        return RIE_OK;
+    if (!pager->cfg->subset.enabled) {
+        goto done;
     }
 
-    return rie_event_handlers[i].handler(pager, ev);
+    /* lookup RandR extension events */
+
+    nhandlers = sizeof(rie_randr_event_handlers)
+              / sizeof(rie_randr_event_handlers[0]);
+
+    for (i = 0; i < nhandlers; i++) {
+        evid = rie_xcb_randr_event(pager->xcb, rie_randr_event_handlers[i].id);
+
+        if (ev->response_type == evid) {
+            if (rie_randr_event_handlers[i].loggable) {
+                rie_debug("randr event %s", rie_randr_event_handlers[i].evname);
+            }
+            return rie_randr_event_handlers[i].handler(pager, ev);
+        }
+    }
+
+done:
+
+    /* unknown event */
+    rie_debug("unknown event #%d", rie_xcb_event_type(ev));
+
+    return RIE_OK;
 }
 
 
@@ -661,6 +691,26 @@ rie_event_xcb_property_notify(rie_t *pager, xcb_generic_event_t *ev)
     }
 
     return rie_property_event_handlers[i].handler(pager, ev);
+}
+
+
+static int
+rie_event_xcb_randr_notify(rie_t *pager, xcb_generic_event_t *ev)
+{
+    rie_rect_t  geom;
+
+    if (rie_xcb_get_output(pager->xcb, pager->cfg->subset.output, &geom)
+        != RIE_OK)
+    {
+       return RIE_ERROR;
+    }
+
+    pager->monitor_geom = geom;
+
+    pager->resize = 1;
+    pager->render = 1;
+
+    return RIE_OK;
 }
 
 

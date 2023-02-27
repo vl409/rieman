@@ -32,6 +32,9 @@
 #define rie_nth_desktop(pager, n) \
     rie_array_get(&(pager)->desktops, n, rie_desktop_t)
 
+#define rie_nth_vdesktop(pager, n) \
+    (*(rie_array_get(&(pager)->vdesktops, n, rie_desktop_t *)))
+
 
 typedef struct {
     uint32_t          nrows;
@@ -51,8 +54,10 @@ static inline rie_rect_t rie_box_fit(rie_rect_t canvas, rie_rect_t box);
 static inline rie_rect_t rie_scale_to_desktop(rie_t *pager, rie_desktop_t *desk,
     rie_rect_t box);
 
+static int rie_init_vdesktops(rie_t *pager);
 static void rie_count_hidden_windows(rie_t *pager);
 static int rie_draw_desktops(rie_t *pager);
+static int rie_desktop_in_subset(rie_t *pager, int dnum);
 static int rie_draw_windows(rie_t *pager);
 static int rie_set_pager_geometry(rie_t *pager, rie_rect_t *win);
 
@@ -83,6 +88,10 @@ rie_render(rie_t *pager)
 {
     int  rc;
 
+    if (rie_init_vdesktops(pager) != RIE_OK) {
+        return RIE_ERROR;
+    }
+
     rie_gfx_render_start(pager->gfx);
 
     rc = rie_draw_desktops(pager);
@@ -95,6 +104,72 @@ rie_render(rie_t *pager)
 }
 
 
+/* this is a (probably partial) view to pager->desktops */
+static int
+rie_init_vdesktops(rie_t *pager)
+{
+    uint32_t  i, j, first, n, rc;
+
+    rie_desktop_t *deskp, **deskpp;
+
+    if (pager->cfg->subset.enabled) {
+
+        first = pager->cfg->subset.start_desktop;
+        n = pager->cfg->subset.ndesktops;
+
+        if (first >= pager->desktops.nitems) {
+            first = pager->desktops.nitems - 1;
+            n = 1;
+            rie_log_error(0, "subset.first is greater than number "
+                             "of desktops, shifted back");
+        }
+
+        if (n == 0) {
+            n = 1;
+            rie_log_error(0, "subset.ndesktops is zero, set to 1");
+        }
+
+        if (n > pager->desktops.nitems) {
+            n = pager->desktops.nitems;
+            rie_log_error(0, "subset.ndesktops decreased "
+                             "to real number of desktops");
+        }
+
+        if (first + n >= pager->desktops.nitems) {
+            n = pager->desktops.nitems - first;
+            rie_log_error(0, "subset.ndesktops decreased "
+                             "to fit into desktops number");
+        }
+
+        rie_debug("using subset of desktops: #%d..#%d", first, first + n);
+
+    } else {
+        first = 0;
+        n = pager->desktops.nitems;
+    }
+
+    if (pager->vdesktops.data) {
+        rie_array_wipe(&pager->vdesktops);
+    }
+
+    rc = rie_array_init(&pager->vdesktops, n,
+                        sizeof(rie_desktop_t *), NULL);
+    if (rc == RIE_ERROR) {
+        return RIE_ERROR;
+    }
+
+    deskp = pager->desktops.data;
+    deskpp = pager->vdesktops.data;
+
+    for (i = first, j = 0; i < first + n; i++, j++) {
+        deskpp[j] = &deskp[i];
+        rie_debug("visible desktop #%d bound to real #%d", j, i);
+    }
+
+    return RIE_OK;
+}
+
+
 int
 rie_desktop_by_coords(rie_t *pager, int x, int y)
 {
@@ -102,8 +177,8 @@ rie_desktop_by_coords(rie_t *pager, int x, int y)
 
     rie_desktop_t  *desk;
 
-    for (i = 0; i < pager->desktops.nitems; i++) {
-        desk = rie_nth_desktop(pager, i);
+    for (i = 0; i < pager->vdesktops.nitems; i++) {
+        desk = rie_nth_vdesktop(pager, i);
 
         if (rie_gfx_xy_inside_rect(x, y, &desk->dbox)) {
             return desk->num;
@@ -128,11 +203,11 @@ rie_viewport_by_coords(rie_t *pager, int x, int y, int *new_x, int *new_y)
 
     vb = rie_skin_border(pager->skin, RIE_BORDER_VIEWPORT);
 
-    for (k = 0; k < pager->desktops.nitems; k++) {
+    for (k = 0; k < pager->vdesktops.nitems; k++) {
         for (i = 0; i < pager->vp_rows; i++) {
             for (j = 0; j < pager->vp_cols; j++) {
 
-                desk = rie_nth_desktop(pager, k);
+                desk = rie_nth_vdesktop(pager, k);
 
                 vp.x = vp.w * j + vb->w * (j + 1) + desk->dbox.x;
                 vp.y = vp.h * i + vb->w * (i + 1) + desk->dbox.y;
@@ -237,10 +312,19 @@ rie_scale_to_desktop(rie_t *pager, rie_desktop_t *desk, rie_rect_t box)
         dbox.h -= vpborder->w;
     }
 
-    area = &pager->desktop_geom;
+    if (pager->cfg->subset.enabled) {
+        area = &pager->monitor_geom;
+
+    } else {
+        area = &pager->desktop_geom;
+    }
 
     scaled.w = rie_wscale(dbox.w, box.w, area->w);
     scaled.h = rie_wscale(dbox.h, box.h, area->h);
+
+    /* if area is on of extra monitors, they have offset */
+    box.x -= area->x;
+    box.y -= area->y;
 
     scaled.x = rie_wscale(dbox.w, box.x, area->w);
     scaled.y = rie_wscale(dbox.h, box.y, area->h);
@@ -315,14 +399,14 @@ rie_draw_desktops(rie_t *pager)
     rie_count_hidden_windows(pager);
 
     /* draw all desktops in a 2D grid */
-    for (i = 0, col = 0, row = 0; i < pager->desktops.nitems; i++, col++) {
+    for (i = 0, col = 0, row = 0; i < pager->vdesktops.nitems; i++, col++) {
 
         if (i % wrap == 0) {
             row++;
             col = 0;
         }
 
-        desk = rie_nth_desktop(pager, i);
+        desk = rie_nth_vdesktop(pager, i);
 
         if (rie_draw_desktop(pager, desk, row - 1, col, m_desk == i)
             != RIE_OK)
@@ -331,14 +415,15 @@ rie_draw_desktops(rie_t *pager)
         }
     }
 
-    desk = rie_nth_desktop(pager, pager->current_desktop);
+    if (rie_desktop_in_subset(pager, pager->current_desktop)) {
+        desk = rie_nth_desktop(pager, pager->current_desktop);
 
-    if (rie_draw_active_desktop_borders(pager, desk) != RIE_OK) {
-        return RIE_ERROR;
+        if (rie_draw_active_desktop_borders(pager, desk) != RIE_OK) {
+            return RIE_ERROR;
+        }
     }
 
-    if (m_desk != -1) {
-
+    if (m_desk != -1 && rie_desktop_in_subset(pager, m_desk)) {
         desk = rie_nth_desktop(pager, m_desk);
 
         if (rie_draw_active_desktop_borders(pager, desk) != RIE_OK) {
@@ -347,6 +432,26 @@ rie_draw_desktops(rie_t *pager)
     }
 
     return rie_draw_windows(pager);
+}
+
+
+static int
+rie_desktop_in_subset(rie_t *pager, int dnum)
+{
+    if (!pager->cfg->subset.enabled) {
+        return 1;
+    }
+
+    if (dnum < pager->cfg->subset.start_desktop) {
+        return 0;
+    }
+
+    if (dnum >= pager->cfg->subset.start_desktop + pager->cfg->subset.ndesktops)
+    {
+        return 0;
+    }
+
+    return 1;
 }
 
 
@@ -393,8 +498,9 @@ rie_draw_windows(rie_t *pager)
 static int
 rie_set_pager_geometry(rie_t *pager, rie_rect_t *win)
 {
-    int32_t   x, y;
-    uint32_t  cols, rows;
+    int32_t      x, y;
+    uint32_t     cols, rows;
+    rie_rect_t  *area;
 
     rie_rect_t     *dbox, *pad, root_geom, *workarea, *cell;
     rie_border_t   *border, *vpborder;
@@ -410,19 +516,25 @@ rie_set_pager_geometry(rie_t *pager, rie_rect_t *win)
         return RIE_ERROR;
     }
 
+    if (pager->cfg->subset.enabled) {
+        area = &pager->monitor_geom;
+
+    } else {
+        area = &pager->desktop_geom;
+    }
+
     if (pager->cfg->desktop.h) {
         dbox->h = pager->cfg->desktop.h;
 
     } else {
         /* automatically determine height using screen aspect ratio */
-        dbox->h = (((float) (pager->desktop_geom.h) / pager->desktop_geom.w))
-                  * pager->cfg->desktop.w;
+        dbox->h = (((float) (area->h) / area->w)) * pager->cfg->desktop.w;
     }
 
     root_geom = rie_xcb_root_geom(pager->xcb);
 
-    pager->vp_rows = rie_max(1, pager->desktop_geom.h / root_geom.h);
-    pager->vp_cols = rie_max(1, pager->desktop_geom.w / root_geom.w);
+    pager->vp_rows = rie_max(1, area->h / root_geom.h);
+    pager->vp_cols = rie_max(1, area->w / root_geom.w);
 
     if (pager->vp_rows > 1 || pager->vp_cols > 1) {
         pager->vp.h = dbox->h / pager->vp_rows;
@@ -445,22 +557,22 @@ rie_set_pager_geometry(rie_t *pager, rie_rect_t *win)
     if (pager->cfg->desktop.orientation == XCB_EWMH_WM_ORIENTATION_HORZ) {
 
         if (pager->cfg->desktop.wrap) {
-            cols = min(pager->cfg->desktop.wrap, pager->desktops.nitems);
-            rows = rie_nfold(pager->desktops.nitems, cols);
+            cols = min(pager->cfg->desktop.wrap, pager->vdesktops.nitems);
+            rows = rie_nfold(pager->vdesktops.nitems, cols);
 
         } else {
-            cols = pager->desktops.nitems;
+            cols = pager->vdesktops.nitems;
             rows = 1;
         }
 
     } else { /* XCB_EWMH_WM_ORIENTATION_VERT */
 
         if (pager->cfg->desktop.wrap) {
-            rows = min(pager->cfg->desktop.wrap, pager->desktops.nitems);
-            cols = rie_nfold(pager->desktops.nitems, rows);
+            rows = min(pager->cfg->desktop.wrap, pager->vdesktops.nitems);
+            cols = rie_nfold(pager->vdesktops.nitems, rows);
 
         } else {
-            rows = pager->desktops.nitems;
+            rows = pager->vdesktops.nitems;
             cols = 1;
         }
     }
@@ -1101,12 +1213,12 @@ rie_set_desktop_geometry(rie_t *pager, rie_desktop_t *desk, int row, int col)
             break;
 
         case XCB_EWMH_WM_BOTTOMRIGHT:
-            lrow = rie_nfold(pager->desktops.nitems, pager->ncols) - row - 1;
+            lrow = rie_nfold(pager->vdesktops.nitems, pager->ncols) - row - 1;
             lcol = pager->ncols - col - 1;
             break;
 
         case XCB_EWMH_WM_BOTTOMLEFT:
-            lrow = rie_nfold(pager->desktops.nitems, pager->ncols) - row - 1;
+            lrow = rie_nfold(pager->vdesktops.nitems, pager->ncols) - row - 1;
             lcol = col;
             break;
 
@@ -1125,12 +1237,12 @@ rie_set_desktop_geometry(rie_t *pager, rie_desktop_t *desk, int row, int col)
 
         case XCB_EWMH_WM_TOPRIGHT:
             lrow = col;
-            lcol = rie_nfold(pager->desktops.nitems, pager->nrows) - row - 1;
+            lcol = rie_nfold(pager->vdesktops.nitems, pager->nrows) - row - 1;
             break;
 
         case XCB_EWMH_WM_BOTTOMRIGHT:
             lrow = pager->nrows - col - 1;
-            lcol = rie_nfold(pager->desktops.nitems, pager->nrows) - row - 1;
+            lcol = rie_nfold(pager->vdesktops.nitems, pager->nrows) - row - 1;
             break;
 
         case XCB_EWMH_WM_BOTTOMLEFT:
@@ -1268,6 +1380,10 @@ rie_draw_window(rie_t *pager, rie_window_t *win)
     if (win->types & RIE_WINDOW_TYPE_DESKTOP
         || win->types & RIE_WINDOW_TYPE_DOCK)
     {
+        return RIE_OK;
+    }
+
+    if (!rie_desktop_in_subset(pager, win->desktop)) {
         return RIE_OK;
     }
 

@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017-2022 Vladimir Homutov
+ * Copyright (C) 2017-2023 Vladimir Homutov
  */
 
 /*
@@ -222,6 +222,20 @@ static rie_conf_item_t rie_conf[] = {
 
     { "window.position.dy", RIE_CTYPE_UINT32, "0",
       offsetof(rie_settings_t, pos_y_offset), NULL, { NULL } },
+
+    /* configuration schema 1.3 */
+
+    { "subset.enabled", RIE_CTYPE_BOOL, "false",
+      offsetof(rie_settings_t, subset.enabled), NULL, { NULL } },
+
+    { "subset.output", RIE_CTYPE_STR, "",
+      offsetof(rie_settings_t, subset.output), NULL, { NULL } },
+
+    { "subset.start_desktop", RIE_CTYPE_UINT32, "0",
+      offsetof(rie_settings_t, subset.start_desktop), NULL, { NULL } },
+
+    { "subset.ndesktops", RIE_CTYPE_UINT32, "1",
+      offsetof(rie_settings_t, subset.ndesktops), NULL, { NULL } },
 
     { NULL, 0, NULL, 0, NULL, { NULL } }
 };

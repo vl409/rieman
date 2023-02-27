@@ -29,6 +29,7 @@
 #include <xcb/xcb_icccm.h>
 #include <xcb/xcb_ewmh.h>
 #include <xcb/xcb_util.h>
+#include <xcb/randr.h>
 #include <signal.h>
 
 
@@ -62,7 +63,7 @@
 #define rie_xcb_handle_error0(err, msg)  rie_xcb_handle_error(err, "%s", msg)
 
 #define rie_xcb_event_type(ev)  ((ev)->response_type & ~0x80)
-
+uint8_t rie_xcb_randr_event(rie_xcb_t *xcb, uint8_t off);
 
 /* atom names are indexed by this enum */
 typedef enum {
@@ -223,6 +224,8 @@ int rie_xcb_restore_hidden(rie_xcb_t *xcb, xcb_window_t win);
 int rie_xcb_set_focus(rie_xcb_t *xcb, xcb_window_t win);
 
 int rie_xcb_set_desktop_layout(rie_xcb_t *xcb, rie_settings_t *cfg);
+
+int rie_xcb_get_output(rie_xcb_t *xcb, char *name, rie_rect_t *geom);
 
 int rie_xcb_handle_error_real(char *file, int line, void *err, char *fmt, ...);
 

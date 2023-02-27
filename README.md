@@ -28,6 +28,7 @@ You will need build tools:
  * xcb-util
  * xcb-ewmh
  * xcb-icccm
+ * xcb-randr
  * cairo      - 2D drawing
  * fontconfig - find font by name
  * freetype2  - work with fonts itself
