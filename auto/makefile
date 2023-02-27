@@ -116,7 +116,7 @@ test: build/rieman
 	@echo "--- running external tests ---"
 	@python ./tests/rieman_tests.py
 	@echo "--- running internal tests ---"
-	@RIE_TEST_ENABLE=1 ./build/rieman; true
+	@RIE_TEST_ENABLE=1 ./build/rieman -c ./tests/conf/default.conf; true
 
 coverage: build/rieman
 	@lcov --directory build --zerocounters > /dev/null 2>&1

@@ -513,6 +513,11 @@ rie_testcase_screenetry(rie_t *pager, rie_testcase_t *tc)
     h = pager->desktop_geom.h;
 
     /* change resolution to other (and hope it doesn't match and available) */
+    /*
+     * FIXME: the command may not work, even though resolutions are listed;
+     *        probably output need to be specified, or there is some other
+     *        reason; if test fails, try running it manually and investigate
+     */
     if (rie_test_exec("xrandr -s 800x600") != RIE_OK) {
         return RIE_ERROR;
     }
