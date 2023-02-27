@@ -162,8 +162,10 @@ rie_xcb_new(rie_settings_t *cfg)
      * StructureNotifyMask is needed to get Configure events to track
      * root window resizes
      */
-    rc = rie_xcb_update_event_mask(xcb, xcb->root, PropertyChangeMask
-                                                   | StructureNotifyMask);
+
+    rc = rie_xcb_update_event_mask(xcb, xcb->root,
+                                   XCB_EVENT_MASK_PROPERTY_CHANGE
+                                   | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY);
     if (rc != RIE_OK) {
         return NULL;
     }
