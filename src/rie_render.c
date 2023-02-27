@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017-2022 Vladimir Homutov
+ * Copyright (C) 2017-2023 Vladimir Homutov
  */
 
 /*
@@ -29,6 +29,9 @@
 #define min(x,y) ((x) < (y)) ? (x) : (y);
 #define rie_wscale(dw, ww, sw)  nearbyintf((float) ((int)(dw) * (ww)) / (sw))
 
+#define rie_nth_desktop(pager, n) \
+    rie_array_get(&(pager)->desktops, n, rie_desktop_t)
+
 
 typedef struct {
     uint32_t          nrows;
@@ -45,7 +48,7 @@ static inline uint32_t   rie_nfold(uint32_t val, uint32_t div);
 static inline rie_rect_t rie_box_center(rie_rect_t canvas, rie_rect_t box);
 static inline rie_rect_t rie_box_scale(rie_rect_t box, float sx, float sy);
 static inline rie_rect_t rie_box_fit(rie_rect_t canvas, rie_rect_t box);
-static inline rie_rect_t rie_scale_to_desktop(rie_t *pager, int desk_num,
+static inline rie_rect_t rie_scale_to_desktop(rie_t *pager, rie_desktop_t *desk,
     rie_rect_t box);
 
 static void rie_count_hidden_windows(rie_t *pager, int i);
@@ -54,12 +57,13 @@ static int rie_draw_windows(rie_t *pager);
 static int rie_set_pager_geometry(rie_t *pager, rie_rect_t *win);
 
 static int rie_draw_pager_background(rie_t *pager, rie_rect_t win);
-static int rie_draw_desktop(rie_t *pager, int i, int row, int col, int active);
-static int rie_draw_desktop_border(rie_t *pager, rie_desktop_t *box, int i,
+static int rie_draw_desktop(rie_t *pager, rie_desktop_t *desk, int row, int col,
     int active);
-static int rie_draw_active_desktop_borders(rie_t *pager, int i);
-static int rie_draw_viewports(rie_t *pager, rie_desktop_t *desk, int i);
-static rie_desktop_t *rie_set_desktop_geometry(rie_t *pager, int i,
+static int rie_draw_desktop_border(rie_t *pager, rie_desktop_t *box,
+    int active);
+static int rie_draw_active_desktop_borders(rie_t *pager, rie_desktop_t *desk);
+static int rie_draw_viewports(rie_t *pager, rie_desktop_t *desk);
+static void rie_set_desktop_geometry(rie_t *pager, rie_desktop_t *desk,
     int row, int col);
 static int rie_draw_window_border(rie_t *pager, rie_texture_t *tspec,
     rie_rect_t *box, rie_rect_t *dbox);
@@ -69,8 +73,8 @@ static int rie_render_icon(rie_t *pager, rie_image_t *image, rie_rect_t wbox,
 
 
 static int rie_get_desktop_label_height(rie_t *pager, uint32_t *th);
-static int rie_draw_desktop_label(rie_t *pager, rie_rect_t desk, int i);
-static int rie_draw_desktop_text(rie_t *pager, rie_rect_t desk, int i);
+static int rie_draw_desktop_label(rie_t *pager, rie_rect_t desk, int dnum);
+static int rie_draw_desktop_text(rie_t *pager, rie_rect_t desk, int dnum);
 
 
 /* entry point of drawing activity */
@@ -98,11 +102,11 @@ rie_desktop_by_coords(rie_t *pager, int x, int y)
 
     rie_desktop_t  *desk;
 
-    desk = pager->desktops.data;
-
     for (i = 0; i < pager->desktops.nitems; i++) {
-        if (rie_gfx_xy_inside_rect(x, y, &desk[i].dbox)) {
-            return i;
+        desk = rie_nth_desktop(pager, i);
+
+        if (rie_gfx_xy_inside_rect(x, y, &desk->dbox)) {
+            return desk->num;
         }
     }
 
@@ -119,8 +123,6 @@ rie_viewport_by_coords(rie_t *pager, int x, int y, int *new_x, int *new_y)
     rie_border_t   *vb;
     rie_desktop_t  *desk;
 
-    desk = pager->desktops.data;
-
     vp.w = pager->vp.w;
     vp.h = pager->vp.h;
 
@@ -130,8 +132,10 @@ rie_viewport_by_coords(rie_t *pager, int x, int y, int *new_x, int *new_y)
         for (i = 0; i < pager->vp_rows; i++) {
             for (j = 0; j < pager->vp_cols; j++) {
 
-                vp.x = vp.w * j + vb->w * (j + 1) + desk[k].dbox.x;
-                vp.y = vp.h * i + vb->w * (i + 1) + desk[k].dbox.y;
+                desk = rie_nth_desktop(pager, k);
+
+                vp.x = vp.w * j + vb->w * (j + 1) + desk->dbox.x;
+                vp.y = vp.h * i + vb->w * (i + 1) + desk->dbox.y;
 
                 if (rie_gfx_xy_inside_rect(x, y, &vp)) {
 
@@ -218,14 +222,10 @@ rie_box_fit(rie_rect_t canvas, rie_rect_t box)
 
 /* scale box with real coordinates into pager's desktop rectangle */
 static rie_rect_t
-rie_scale_to_desktop(rie_t *pager, int desk_num, rie_rect_t box)
+rie_scale_to_desktop(rie_t *pager, rie_desktop_t *desk, rie_rect_t box)
 {
-    rie_rect_t      scaled, *area, dbox;
-    rie_border_t   *vpborder;
-    rie_desktop_t  *deskp, *desk;
-
-    deskp = pager->desktops.data;
-    desk = &deskp[desk_num];
+    rie_rect_t     scaled, *area, dbox;
+    rie_border_t  *vpborder;
 
     dbox = desk->dbox;
 
@@ -288,7 +288,8 @@ rie_draw_desktops(rie_t *pager)
 {
     int  i, row, col, wrap, m_desk;
 
-    rie_rect_t  wbox;
+    rie_rect_t      wbox;
+    rie_desktop_t  *desk;
 
     /* calculate single desktop size and thus window size */
     if (rie_set_pager_geometry(pager, &wbox) != RIE_OK) {
@@ -316,21 +317,28 @@ rie_draw_desktops(rie_t *pager)
             col = 0;
         }
 
+        desk = rie_nth_desktop(pager, i);
+
         rie_count_hidden_windows(pager, i);
 
-        if (rie_draw_desktop(pager, i, row - 1, col, m_desk == i) != RIE_OK) {
+        if (rie_draw_desktop(pager, desk, row - 1, col, m_desk == i)
+            != RIE_OK)
+        {
             return RIE_ERROR;
         }
     }
 
-    if (rie_draw_active_desktop_borders(pager, pager->current_desktop)
-        != RIE_OK)
-    {
+    desk = rie_nth_desktop(pager, pager->current_desktop);
+
+    if (rie_draw_active_desktop_borders(pager, desk) != RIE_OK) {
         return RIE_ERROR;
     }
 
     if (m_desk != -1) {
-        if (rie_draw_active_desktop_borders(pager, m_desk) != RIE_OK) {
+
+        desk = rie_nth_desktop(pager, m_desk);
+
+        if (rie_draw_active_desktop_borders(pager, desk) != RIE_OK) {
             return RIE_ERROR;
         }
     }
@@ -800,7 +808,7 @@ rie_draw_border(rie_t *pager, rie_border_t *border,
 
 
 static int
-rie_draw_desktop_border(rie_t *pager, rie_desktop_t *desk, int i, int active)
+rie_draw_desktop_border(rie_t *pager, rie_desktop_t *desk, int active)
 {
     rie_border_t         *border;
     rie_border_create_t   bc;
@@ -828,14 +836,10 @@ rie_draw_desktop_border(rie_t *pager, rie_desktop_t *desk, int i, int active)
 
 
 static int
-rie_draw_active_desktop_borders(rie_t *pager, int i)
+rie_draw_active_desktop_borders(rie_t *pager, rie_desktop_t *desk)
 {
     rie_border_t         *aborder, *border;
-    rie_desktop_t        *desk;
     rie_border_create_t   bc;
-
-    desk = pager->desktops.data;
-    desk = &desk[i];
 
     border = rie_skin_border(pager->skin, RIE_BORDER_PAGER);
     if (border->w == 0) {
@@ -865,7 +869,7 @@ rie_draw_active_desktop_borders(rie_t *pager, int i)
 
 
 static int
-rie_draw_viewports(rie_t *pager, rie_desktop_t *desk, int di)
+rie_draw_viewports(rie_t *pager, rie_desktop_t *desk)
 {
     int                   i, j;
     rie_clip_t            vclip;
@@ -891,7 +895,7 @@ rie_draw_viewports(rie_t *pager, rie_desktop_t *desk, int di)
     /* current viewport borders */
     cbc = abc;
 
-    viewport = rie_array_get(&pager->viewports, di, rie_rect_t);
+    viewport = rie_array_get(&pager->viewports, desk->num, rie_rect_t);
 
     for (i = 0; i < pager->vp_rows; i++) {
         for (j = 0; j < pager->vp_cols; j++) {
@@ -915,7 +919,7 @@ rie_draw_viewports(rie_t *pager, rie_desktop_t *desk, int di)
             if (i == viewport->h && j == viewport->w) {
 
                 /* viewport on current desktop is active */
-                if (di == pager->current_desktop) {
+                if (desk->num == pager->current_desktop) {
                     tspec = rie_skin_texture(pager->skin,
                                              RIE_TX_VIEWPORT_ACTIVE);
 
@@ -999,14 +1003,14 @@ rie_draw_viewports(rie_t *pager, rie_desktop_t *desk, int di)
 
 
 static int
-rie_draw_desktop(rie_t *pager, int i, int row, int col, int active)
+rie_draw_desktop(rie_t *pager, rie_desktop_t *desk, int row, int col,
+    int active)
 {
-    rie_desktop_t  *desk;
     rie_texture_t  *tspec, root;
 
-    desk = rie_set_desktop_geometry(pager, i, row, col);
+    rie_set_desktop_geometry(pager, desk, row, col);
 
-    if (i == pager->current_desktop || active) {
+    if (desk->num == pager->current_desktop || active) {
         tspec = rie_skin_texture(pager->skin, RIE_TX_CURRENT_DESKTOP);
 
     } else {
@@ -1040,41 +1044,39 @@ rie_draw_desktop(rie_t *pager, int i, int row, int col, int active)
     }
 
     if (pager->cfg->show_viewports) {
-        if (rie_draw_viewports(pager, desk, i) != RIE_OK) {
+        if (rie_draw_viewports(pager, desk) != RIE_OK) {
             return RIE_ERROR;
         }
     }
 
-    if (rie_draw_desktop_border(pager, desk, i, active) != RIE_OK) {
+    if (rie_draw_desktop_border(pager, desk, active) != RIE_OK) {
         return RIE_ERROR;
     }
 
     if (pager->cfg->show_pad) {
-        rie_draw_desktop_label(pager, desk->pad, i);
+        rie_draw_desktop_label(pager, desk->pad, desk->num);
     }
 
     if (pager->cfg->show_text) {
-        rie_draw_desktop_text(pager, desk->dbox, i + 1);
+        rie_draw_desktop_text(pager, desk->dbox, desk->num + 1);
     }
 
     return RIE_OK;
 }
 
 
-static rie_desktop_t *
-rie_set_desktop_geometry(rie_t *pager, int i, int row, int col)
+static void
+rie_set_desktop_geometry(rie_t *pager, rie_desktop_t *desk, int row, int col)
 {
-    uint32_t        lrow, lcol;
+    uint32_t       lrow, lcol;
 
-    rie_rect_t     *cell, *dbox, *pad;
-    rie_border_t   *border;
-    rie_desktop_t  *desk;
+    rie_rect_t    *cell, *dbox, *pad;
+    rie_border_t  *border;
 
     /* shortcuts */
     cell = &pager->template.cell;
     dbox = &pager->template.dbox;
     pad = &pager->template.pad;
-    desk = pager->desktops.data;
 
     /*
      * convert (row, col) - on-screen position inside grid into logical
@@ -1139,34 +1141,32 @@ rie_set_desktop_geometry(rie_t *pager, int i, int row, int col)
         }
     }
 
-    desk[i].lrow = lrow;
-    desk[i].lcol = lcol;
+    desk->lrow = lrow;
+    desk->lcol = lcol;
 
     border = rie_skin_border(pager->skin, RIE_BORDER_PAGER);
 
     /* initialize desktop, pad and bounding box rectangles for current desk */
-    desk[i].cell.x = lcol * cell->w + border->w * (lcol + 1);
-    desk[i].cell.y = lrow * cell->h + border->w * (lrow + 1);
-    desk[i].cell.w = cell->w;
-    desk[i].cell.h = cell->h;
+    desk->cell.x = lcol * cell->w + border->w * (lcol + 1);
+    desk->cell.y = lrow * cell->h + border->w * (lrow + 1);
+    desk->cell.w = cell->w;
+    desk->cell.h = cell->h;
 
-    desk[i].dbox.x = desk[i].cell.x;
-    desk[i].dbox.y = desk[i].cell.y;
-    desk[i].dbox.w = dbox->w;
-    desk[i].dbox.h = dbox->h;
+    desk->dbox.x = desk->cell.x;
+    desk->dbox.y = desk->cell.y;
+    desk->dbox.w = dbox->w;
+    desk->dbox.h = dbox->h;
 
-    desk[i].pad.x = desk[i].dbox.x;
-    desk[i].pad.y = desk[i].dbox.y + desk[i].dbox.h;
-    desk[i].pad.w = pad->w;
-    desk[i].pad.h = pad->h;
+    desk->pad.x = desk->dbox.x;
+    desk->pad.y = desk->dbox.y + desk->dbox.h;
+    desk->pad.w = pad->w;
+    desk->pad.h = pad->h;
 
     if (pager->cfg->pad_position == RIE_PAD_POS_ABOVE) {
-        desk[i].dbox.y = desk[i].cell.y + pad->h;
-        desk[i].pad.y = desk[i].cell.y;
+        desk->dbox.y = desk->cell.y + pad->h;
+        desk->pad.y = desk->cell.y;
     }
     /* else: RIE_PAD_POS_BELOW, default */
-
-    return &desk[i];
 }
 
 
@@ -1252,7 +1252,7 @@ rie_draw_window(rie_t *pager, rie_window_t *win)
     rie_clip_t      wclip, iclip;
     rie_image_t    *icon;
     rie_texture_t  *tspec;
-    rie_desktop_t  *deskp, *desk;
+    rie_desktop_t  *desk;
 
     if (win->dead) {
         return RIE_OK;
@@ -1273,8 +1273,7 @@ rie_draw_window(rie_t *pager, rie_window_t *win)
         return RIE_OK;
     }
 
-    deskp = pager->desktops.data;
-    desk = &deskp[win->desktop];
+    desk = rie_nth_desktop(pager, win->desktop);
 
     if (win->state & RIE_WIN_STATE_HIDDEN) {
 
@@ -1328,7 +1327,7 @@ rie_draw_window(rie_t *pager, rie_window_t *win)
         return RIE_OK;
     }
 
-    scaled = rie_scale_to_desktop(pager, win->desktop, win->box);
+    scaled = rie_scale_to_desktop(pager, desk, win->box);
 
     win->sbox = scaled;
 
@@ -1427,7 +1426,7 @@ rie_get_desktop_label_height(rie_t *pager, uint32_t *th)
 
 
 static int
-rie_draw_desktop_label(rie_t *pager, rie_rect_t pad, int i)
+rie_draw_desktop_label(rie_t *pager, rie_rect_t pad, int dnum)
 {
     char  *dname, **dnames;
 
@@ -1439,10 +1438,12 @@ rie_draw_desktop_label(rie_t *pager, rie_rect_t pad, int i)
     dnames = (char **) pager->desktop_names.data;
 
     /* not all desktops are named */
-    dname = (i < pager->desktop_names.nitems) ? dnames[i] : "-";
+    dname = (dnum < pager->desktop_names.nitems) ? dnames[dnum] : "-";
 
     /* windows in pager under mouse display their name instead of desktop's */
-    if (pager->fwindow && pager->fwindow->m_in && i == pager->fwindow->desktop)
+    if (pager->fwindow
+        && pager->fwindow->m_in
+        && dnum == pager->fwindow->desktop)
     {
         dname = pager->fwindow->name;
         fc = rie_skin_font(pager->skin, RIE_FONT_WINDOW_NAME);
@@ -1469,7 +1470,7 @@ rie_draw_desktop_label(rie_t *pager, rie_rect_t pad, int i)
 
 
 static int
-rie_draw_desktop_text(rie_t *pager, rie_rect_t desk, int i)
+rie_draw_desktop_text(rie_t *pager, rie_rect_t desk, int dnum)
 {
     char        *dname, **dnames;
     size_t       len;
@@ -1483,11 +1484,11 @@ rie_draw_desktop_text(rie_t *pager, rie_rect_t desk, int i)
     clip.parent = NULL;
 
     if (pager->cfg->desktop.content == RIE_DESKTOP_NUMBER) {
-        len = (i == 0) ? 1 : ceil(log10(abs(i + 1)));
+        len = (dnum == 0) ? 1 : ceil(log10(abs(dnum + 1)));
 
         char dnumber[len + 1];
 
-        sprintf(dnumber, "%d", i);
+        sprintf(dnumber, "%d", dnum);
 
         box = rie_gfx_text_bounding_box(pager->gfx, fc, dnumber);
         box = rie_box_center(desk, box);
@@ -1498,7 +1499,7 @@ rie_draw_desktop_text(rie_t *pager, rie_rect_t desk, int i)
         dnames = (char **) pager->desktop_names.data;
 
         /* not all desktops are named */
-        dname = (i < pager->desktop_names.nitems) ? dnames[i] : "-";
+        dname = (dnum < pager->desktop_names.nitems) ? dnames[dnum] : "-";
 
         box = rie_gfx_text_bounding_box(pager->gfx, fc, dname);
         box = rie_box_center(desk, box);

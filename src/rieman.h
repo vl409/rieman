@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017-2022 Vladimir Homutov
+ * Copyright (C) 2017-2023 Vladimir Homutov
  */
 
 /*
@@ -159,6 +159,7 @@ struct rie_settings_s {
 };
 
 typedef struct {
+    uint32_t         num;                   /* desktop number (real) */
     rie_rect_t       cell;                  /* bounding box of main cell */
     rie_rect_t       dbox;                  /* desktop representation */
     rie_rect_t       pad;                   /* pad for desktop name/icons */

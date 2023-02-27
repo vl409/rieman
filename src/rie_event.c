@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017-2020 Vladimir Homutov
+ * Copyright (C) 2017-2023 Vladimir Homutov
  */
 
 /*
@@ -667,10 +667,11 @@ rie_event_xcb_property_notify(rie_t *pager, xcb_generic_event_t *ev)
 static int
 rie_event_number_of_desktops(rie_t *pager, xcb_generic_event_t *ev)
 {
-    int       screen, rc, len, oldcount;
+    int       screen, rc, len, oldcount, i;
     uint32_t  ndesktops;
 
     rie_array_t                 desktops;
+    rie_desktop_t              *deskp;
     xcb_generic_error_t        *err;
     xcb_ewmh_connection_t      *ec;
     xcb_get_property_cookie_t   cookie;
@@ -718,6 +719,11 @@ rie_event_number_of_desktops(rie_t *pager, xcb_generic_event_t *ev)
         memcpy(desktops.data, pager->desktops.data, len * sizeof(rie_desktop_t));
 
         rie_array_wipe(&pager->desktops);
+    }
+
+    deskp = desktops.data;
+    for (i = 0; i < ndesktops; i++ ) {
+        deskp[i].num = i;
     }
 
     pager->desktops = desktops;
