@@ -702,7 +702,16 @@ rie_event_xcb_randr_notify(rie_t *pager, xcb_generic_event_t *ev)
     if (rie_xcb_get_output(pager->xcb, pager->cfg->subset.output, &geom)
         != RIE_OK)
     {
-       return RIE_ERROR;
+        if (pager->monitor_geom.w == 0) {
+            rie_log_error(0, "failed to get geometry of output \"%s\"",
+                          pager->cfg->subset.output);
+            return RIE_ERROR;
+
+        } else {
+            /* ignore changes if we already have some geometry available */
+            rie_debug("ignored randr event: cannot get output geometry");
+            return RIE_OK;
+        }
     }
 
     pager->monitor_geom = geom;
