@@ -591,9 +591,15 @@ rie_set_pager_geometry(rie_t *pager, rie_rect_t *win)
         x = 0;
         y = 0;
 
-        /* workarea is used to avoid various DE's toolbars/docks */
-        workarea = rie_array_get(&pager->workareas,
-                                 pager->current_desktop, rie_rect_t);
+        if (pager->cfg->subset.enabled) {
+            /* in subset mode, move to monitor side, not virtual desktop */
+            workarea = &pager->monitor_geom;
+
+        } else {
+            /* workarea is used to avoid various DE's toolbars/docks */
+            workarea = rie_array_get(&pager->workareas,
+                                     pager->current_desktop, rie_rect_t);
+        }
 
         switch (pager->cfg->position) {
         case RIE_POS_TOPLEFT:
