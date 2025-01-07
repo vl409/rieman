@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017-2022 Vladimir Homutov
+ * Copyright (C) 2017-2025 Vladimir Homutov
  */
 
 /*
@@ -124,7 +124,7 @@ rie_window_query(rie_t *pager, rie_window_t *window, uint32_t winid)
     char  *textres;
 
     rie_xcb_t     *xcb;
-    rie_rect_t    *vp, box, bb, frame;
+    rie_rect_t    *vp;
     xcb_window_t  *root;
 
     xcb = pager->xcb;
@@ -197,22 +197,6 @@ rie_window_query(rie_t *pager, rie_window_t *window, uint32_t winid)
                                                  | PropertyChangeMask);
 
     /* result is ignored, as window may not exist */
-
-    if (window->tile_adjust) {
-
-        window->tile_adjust = 0;
-
-        box = window->box;
-        bb = window->tile_box;
-        frame = window->frame;
-
-        box.x = (abs((int32_t)(bb.w - (box.w + frame.x + frame.w))) / 2) + bb.x;
-        box.y = (abs((int32_t)(bb.h - (box.h + frame.y + frame.h))) / 2) + bb.y;
-
-
-        return rie_xcb_moveresize_window(pager->xcb, winid,
-                                         box.x, box.y, box.w, box.h);
-    }
 
     return RIE_OK;
 }
@@ -354,7 +338,6 @@ rie_window_free_icons(void *data, size_t nitems)
 static int
 rie_window_center_resize(rie_t *pager, rie_window_t *win, rie_rect_t bb)
 {
-    int         rc;
     rie_rect_t  frame;
 
     frame = win->frame;
@@ -364,23 +347,8 @@ rie_window_center_resize(rie_t *pager, rie_window_t *win, rie_rect_t bb)
     bb.w -= (frame.x + frame.w);
     bb.h -= (frame.y + frame.h);
 
-    rc = rie_xcb_moveresize_window(pager->xcb, win->winid,
+    return rie_xcb_moveresize_window(pager->xcb, win->winid,
                                    bb.x, bb.y, bb.w, bb.h);
-    if (rc != RIE_OK) {
-        return rc;
-    }
-
-    /*
-     * request for window resize is sent...
-     * ConfigureNotify event comes...
-     * rie_window_query() is invoked...
-     * and uses new coordinates to center self...
-     */
-
-    win->tile_adjust = 1;
-    win->tile_box = bb;
-
-    return RIE_OK;
 }
 
 

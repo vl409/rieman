@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2017 Vladimir Homutov
+ * Copyright (C) 2017-2025 Vladimir Homutov
  */
 
 /*
@@ -35,7 +35,6 @@ struct  rie_window_s {
     rie_rect_t       sbox;       /* scaled window inside pager    */
     rie_rect_t       hbox;       /* box of a hidden window on pad */
     rie_rect_t       frame;      /* window manager decorations (real) */
-    rie_rect_t       tile_box;   /* tiling bounding box */
 
     char            *name;
     char            *title;
@@ -47,7 +46,6 @@ struct  rie_window_s {
     uint8_t          focused;
     uint8_t          m_in;       /* mouse is over window *in pager* */
     uint8_t          dead;
-    uint8_t          tile_adjust;
     rie_array_t     *icons;
 };
 
